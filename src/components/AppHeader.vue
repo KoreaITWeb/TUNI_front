@@ -3,9 +3,10 @@
     <div class="logo">TUNI</div>
 
     <nav class="nav">
-      <router-link to="/">Home</router-link>
-      |
-      <router-link to="/about">About</router-link>
+      <button @click="goToShop">Shop</button>
+      <button @click="goToSell">Sell</button>
+      <button @click="goToChat">Chat</button>
+      <button @click="goToProfile">Profile</button>
     </nav>
 
     <div class="right">
@@ -18,12 +19,22 @@
 export default {
   name: 'AppHeader',
   methods: {
-    goToLogin() {
-      this.$router.push('/login')
+    goToShop() {
+      this.$router.push('/Shop')
+    },
+    goToSell() {
+      this.$router.push('/Sell')
+    },
+    goToChat() {
+      this.$router.push('/Chat')
+    },
+    goToProfile() {
+      this.$router.push('/Profile')
     }
   }
 }
 </script>
+
 
 <style scoped>
 .header {

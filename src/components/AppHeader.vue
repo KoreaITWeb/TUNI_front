@@ -1,6 +1,13 @@
 <template>
   <header class="header">
     <div class="logo">TUNI</div>
+
+    <nav class="nav">
+      <router-link to="/">Home</router-link>
+      |
+      <router-link to="/about">About</router-link>
+    </nav>
+
     <div class="right">
       <button @click="goToLogin">로그인</button>
     </div>

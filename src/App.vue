@@ -1,26 +1,43 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <Header />
+    <main class="content">
+      <router-view />
+    </main>
+    <Footer />
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import Header from '@/components/AppHeader.vue'
+import Footer from '@/components/AppFooter.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    Header,
+    Footer
   }
 }
 </script>
 
 <style>
+/* 전체 높이 설정 */
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* Flexbox 레이아웃 적용 */
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 본문 영역은 확장되도록 설정 */
+.content {
+  flex: 1;
 }
 </style>

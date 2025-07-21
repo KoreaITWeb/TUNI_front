@@ -53,9 +53,6 @@
             <li class="page-item"><a class="page-link">2</a></li>
             <li class="page-item"><a class="page-link">3</a></li>
             <li class="page-item"><a class="page-link">…</a></li>
-            <li class="page-item"><a class="page-link">99</a></li>
-            <li class="page-item"><a class="page-link">100</a></li>
-            <li class="page-item"><a class="page-link">Next →</a></li>
           </ul>
         </nav>
       </div>

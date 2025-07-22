@@ -36,11 +36,18 @@
 
         <!-- 카드 영역 -->
         <div class="d-flex flex-wrap gap-3">
-          <div class="card" style="width: 12rem;" v-for="i in 6" :key="i">
-            <img src="https://via.placeholder.com/150" class="card-img-top" alt="...">
+          <div
+            class="card"
+            style="width: 12rem; cursor:pointer;"
+            v-for="product in products"
+            :key="product.id"
+            @click="goToDetail(product.id)"
+          >
+            <img :src="product.imageUrl" class="card-img-top" alt="상품 이미지" />
             <div class="card-body">
-              <p class="card-text">Text</p>
-              <p class="card-text fw-bold">$0</p>
+              <h6 class="card-title">{{ product.title }}</h6>
+              <p class="card-text text-truncate">{{ product.description }}</p>
+              <p class="card-text fw-bold">{{ product.price }}원</p>
             </div>
           </div>
         </div>
@@ -49,9 +56,13 @@
         <nav class="mt-4">
           <ul class="pagination justify-content-center">
             <li class="page-item disabled"><a class="page-link">← Previous</a></li>
-            <li></li>
-            <li></li>
-            <li></li>
+            <li class="page-item active"><a class="page-link">1</a></li>
+            <li class="page-item"><a class="page-link">2</a></li>
+            <li class="page-item"><a class="page-link">3</a></li>
+            <li class="page-item"><a class="page-link">…</a></li>
+            <li class="page-item"><a class="page-link">99</a></li>
+            <li class="page-item"><a class="page-link">100</a></li>
+            <li class="page-item"><a class="page-link">Next →</a></li>
           </ul>
         </nav>
       </div>
@@ -60,8 +71,26 @@
 </template>
 
 <script>
+import { fetchProducts } from '@/api/product';
+
 export default {
-  name: 'MainPage'
+  name: 'MainPage',
+  data() {
+    return {
+      products: []
+    }
+  },
+  mounted() {
+    fetchProducts()
+      .then(data => {
+        this.products = data;
+      });
+  },
+  methods: {
+    goToDetail(productId) {
+      this.$router.push({ name: 'ProductDetail', params: { id: productId } });
+    }
+  }
 }
 </script>
 
@@ -69,5 +98,11 @@ export default {
 .card img {
   height: 150px;
   object-fit: cover;
+}
+.card {
+  transition: box-shadow 0.2s;
+}
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,.16);
 }
 </style>

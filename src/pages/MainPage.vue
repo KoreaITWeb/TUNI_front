@@ -1,5 +1,4 @@
 <template>
-<<<<<<< HEAD
   <div class="page-container">
     <!-- 왼쪽 사이드바 공간 확보 -->
     <aside class="sidebar">
@@ -16,7 +15,6 @@
           <p class="card-text">Some quick example text...</p>
           <a href="#" class="btn btn-primary">Go somewhere</a>
         </div>
-=======
   <div class="container-fluid">
     <div class="row">
       <!-- 왼쪽 필터 영역 -->
@@ -83,7 +81,6 @@
             <li class="page-item"><a class="page-link">Next →</a></li>
           </ul>
         </nav>
->>>>>>> d635fa86cf9c4fbe9313d74e7e94d784fe61b242
       </div>
     </div>
   </div>

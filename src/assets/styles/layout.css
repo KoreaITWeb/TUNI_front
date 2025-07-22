@@ -1,13 +1,21 @@
 /* layout.css */
+  /* .my-page {
+    min-height: 100vh;
+    background-color: #f9fafb;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  } */
 
   .header {
-    display: flex;
+    /* display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: center; 
     padding: 15px 30px;
     background-color: hsl(0, 0%, 94%);
     border-bottom: 1px solid #ccc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); */
+    background-color: white;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e5e7eb;
   }
   
   .header-container {

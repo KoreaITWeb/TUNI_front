@@ -71,7 +71,7 @@
 </template>
 
 <script>
-import { fetchProducts } from '@/api/product';
+//import { fetchProducts } from '@/api/product'; 
 
 export default {
   name: 'MainPage',
@@ -80,12 +80,14 @@ export default {
       products: []
     }
   },
+  /*
   mounted() {
     fetchProducts()
       .then(data => {
         this.products = data;
       });
   },
+  */
   methods: {
     goToDetail(productId) {
       this.$router.push({ name: 'ProductDetail', params: { id: productId } });

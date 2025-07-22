@@ -51,7 +51,7 @@
             </div>
           </div>
         </div>
-
+        <!-- 에러 해결 -->
         <!-- 페이지네이션 -->
         <nav class="mt-4">
           <ul class="pagination justify-content-center">

@@ -1,21 +1,19 @@
 <!-- AppFooter.vue -->
 <template>
-  <footer>
-    <p>© 2025 Tuni. All rights reserved.</p>
-  </footer>
+  <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-container">
+        <p class="footer-text">&copy; 2025 캠퍼스 마켓. All rights reserved.</p>
+      </div>
+    </footer>
 </template>
 
 <script>
+import '@/assets/styles/layout.css';
+
 export default {
   name: 'AppFooter'
 }
 </script>
 
-<style scoped>
-footer {
-  text-align: center;
-  padding: 1rem;
-  background-color: #f2f2f2;
-  color: #333;
-}
-</style>
+

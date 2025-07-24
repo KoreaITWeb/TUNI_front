@@ -18,7 +18,7 @@
           </button>
         </div>
         <div class="right">
-          <button @click="goToMy" style="margin-right: 10px;">마이페이지</button>
+          <button @click="goToMy"  style="margin-right: 10px;">마이페이지</button>
           <button @click="goToLogin">로그인</button>
         </div>
       </div>
@@ -28,7 +28,7 @@
 
 
 <script setup>
-import '@/assets/styles/layout.css'
+
 import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 

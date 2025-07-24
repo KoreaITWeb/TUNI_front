@@ -157,7 +157,7 @@ import {
   MessageSquare, 
   ShoppingCart 
 } from 'lucide-vue-next'
-
+import '@/assets/styles/Mypage.css';
 const activeMenu = ref('wishlist')
 
 const user = reactive({

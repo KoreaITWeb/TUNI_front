@@ -70,25 +70,20 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const products = ref([])  // 기존 data의 products 배열
 
-export default {
-  name: 'MainPage',
-  data() {
-    return {
-      products: []
-    }
-  },
-  
-  methods: {
-    goToDetail(productId) {
-      this.$router.push({ name: 'ProductDetail', params: { id: productId } });
-    }
-  }
+const router = useRouter()
+
+function goToDetail(productId) {
+  router.push({ name: 'ProductDetail', params: { id: productId } })
 }
 </script>
 
+<!--
 <style scoped>
 .card img {
   height: 150px;
@@ -101,3 +96,4 @@ export default {
   box-shadow: 0 4px 12px rgba(0,0,0,.16);
 }
 </style>
+-->

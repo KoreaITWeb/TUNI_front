@@ -113,3 +113,57 @@
     margin: 0;
   }
   
+  /* 반응형 스타일 */
+  @media (max-width: 768px) {
+    .profile-content {
+      flex-direction: column;
+    }
+    
+    .profile-info {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .stats-dashboard {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .navigation-menu {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* 애니메이션 */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .content-section {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  /* 스크롤바 스타일 */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+  

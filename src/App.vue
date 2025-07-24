@@ -8,17 +8,9 @@
   </div>
 </template>
 
-<script>
-import Header from '@/components/AppHeader.vue'
-import Footer from '@/components/AppFooter.vue'
-
-export default {
-  name: 'App',
-  components: {
-    Header,
-    Footer
-  }
-}
+<script setup>
+import Header from '@/components/layout/AppHeader.vue'
+import Footer from '@/components/layout/AppFooter.vue'
 </script>
 
 <style>

@@ -167,3 +167,37 @@
     background: #a8a8a8;
   }
   
+  /* 네비게이션 메뉴 링크 간격 */
+  .navbar {
+    display: flex;
+    flex: 1; /* navbar가 header-content 내에서 남은 공간 다 차지 */
+    justify-content: center; /* 가운데 정렬 */
+    align-items: center;
+    gap: 15px; /* nav 아이템 간 간격 */
+    /* 좌우 여백을 줘서 로고와 오른쪽 버튼과 공간 확보 */
+    margin-left: 20px;  /* 로고 쪽과 간격 */
+    margin-right: 20px; /* 로그인 버튼 쪽과 간격 */
+  }
+  
+  .navbar-nav {
+    display: flex;
+    flex-direction: row;
+    gap: 70px;  /* 간격을 40px로 넓힘 */
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    align-items: center;
+  }
+  
+  .nav-link {
+    padding: 10px 16px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .nav-link:hover {
+    background-color: #f0f0f0; /* 호버시 배경색 */
+    color: #000;               /* 호버시 글자색 */
+  }

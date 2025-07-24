@@ -83,17 +83,4 @@ function goToDetail(productId) {
 }
 </script>
 
-<!--
-<style scoped>
-.card img {
-  height: 150px;
-  object-fit: cover;
-}
-.card {
-  transition: box-shadow 0.2s;
-}
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,.16);
-}
-</style>
--->
+

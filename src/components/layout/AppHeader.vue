@@ -3,12 +3,23 @@
     <div class="header-container">
       <div class="header-content">
         <div class="logo">TUNI</div>
-        <nav class="nav">
-          <button @click="goToShop">Shop</button>
-          <button @click="goToSell">Sell</button>
-          <button @click="goToChat">Chat</button>
-          <button @click="goToProfile">Profile</button>
-        </nav>
+          <nav class="navbar">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a class="nav-link active" href="#" @click="goToShop">Shop</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" @click="goToSell">Sell</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" @click="goToChat">Chat</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" @click="goToProfile">Profile</a>
+              </li>
+            </ul>
+          </nav>
+
         <div class="header-actions">
           <button class="icon-button">
             <Bell class="icon" />
@@ -48,6 +59,10 @@ function goToChat() {
 
 function goToProfile() {
   router.push('/Profile')
+}
+
+function goToLogin() {
+  router.push('/Login')
 }
 
 function goToMy() {

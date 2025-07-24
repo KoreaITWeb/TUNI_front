@@ -1,0 +1,85 @@
+/* 전체 페이지 감싸는 컨테이너 */
+.shop-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+
+
+/* 카드 목록 flex wrap 스타일 */
+.product-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* 개별 카드 너비 및 스타일 */
+.product-card {
+  width: 12rem;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: white;
+  transition: box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+  width: 100%;
+  height: 8rem;
+  object-fit: cover;
+}
+
+.product-card .card-body {
+  padding: 1rem;
+}
+
+.product-card .card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.product-card .card-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0;
+}
+
+.product-card .fw-bold {
+  font-weight: 700;
+  color: #111827;
+}
+
+/* 정렬 버튼 그룹 */
+.sorting-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sorting-group .btn {
+  min-width: 8rem;
+}
+
+.product-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.product-card {
+  flex: 0 0 calc(25% - 1rem); /* 4개씩 보이도록 설정 (gap 고려) */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  background-color: #fff;
+  cursor: pointer;
+  min-height: 200px;
+}
+

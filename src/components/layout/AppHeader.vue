@@ -32,7 +32,7 @@
           </button>
         </div>
         <div class="right">
-          <button @click="goToLogin">로그인</button>
+          <button @click="goToLogin">Login</button>
         </div>
       </div>
     </div>

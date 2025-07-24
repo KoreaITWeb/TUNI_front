@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid">
+  <div class="shop-container">
     <div class="row">
       <!-- 왼쪽 필터 영역 -->
       <div class="col-md-3 border-end">
@@ -35,46 +35,95 @@
         </div>
 
         <!-- 카드 영역 -->
-        <div class="d-flex flex-wrap gap-3">
+        <div class="product-list">
           <div
-            class="card"
+            class="product-card"
             style="width: 12rem; cursor:pointer;"
             v-for="product in products"
             :key="product.id"
             @click="goToDetail(product.id)"
           >
-            <img :src="product.imageUrl" class="card-img-top" alt="상품 이미지" />
+            <img :src="product.imageUrl" alt="상품 이미지" />
             <div class="card-body">
               <h6 class="card-title">{{ product.title }}</h6>
               <p class="card-text text-truncate">{{ product.description }}</p>
-              <p class="card-text fw-bold">{{ product.price }}원</p>
+              <p class="card-text fw-bold">{{ product.price }}$</p>
             </div>
           </div>
         </div>
 
-        <!-- 페이지네이션 -->
-        <nav class="mt-4">
-          <ul class="pagination justify-content-center">
-            <li class="page-item disabled"><a class="page-link">← Previous</a></li>
-            <li class="page-item active"><a class="page-link">1</a></li>
-            <li class="page-item"><a class="page-link">2</a></li>
-            <li class="page-item"><a class="page-link">3</a></li>
-            <li class="page-item"><a class="page-link">…</a></li>
-            <li class="page-item"><a class="page-link">99</a></li>
-            <li class="page-item"><a class="page-link">100</a></li>
-            <li class="page-item"><a class="page-link">Next →</a></li>
-          </ul>
-        </nav>
+      
+      <!-- 페이지네이션 -->
+      <nav class="mt-4" style="display: flex; justify-content: center;">
+        <ul class="pagination">
+          <li class="page-item disabled"><a class="page-link">← Previous</a></li>
+          <li class="page-item active"><a class="page-link">1</a></li>
+          <li class="page-item"><a class="page-link">2</a></li>
+          <li class="page-item"><a class="page-link">3</a></li>
+          <li class="page-item"><a class="page-link">…</a></li>
+          <li class="page-item"><a class="page-link">99</a></li>
+          <li class="page-item"><a class="page-link">100</a></li>
+          <li class="page-item"><a class="page-link">Next →</a></li>
+        </ul>
+      </nav>
+
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import '@/assets/styles/pages/ListPage.css';
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-const products = ref([])  // 기존 data의 products 배열
+/* const products = ref([])  // 기존 data의 products 배열 */ /* 기본 카드열 */
+const products = ref([
+  {
+    id: 1,
+    title: 'Smartphone',
+    description: 'Latest Android smartphone.',
+    price: 799,
+    imageUrl: 'https://via.placeholder.com/150'
+  },
+  {
+    id: 2,
+    title: 'Earbuds',
+    description: 'Noise cancelling wireless earbuds.',
+    price: 149,
+    imageUrl: 'https://via.placeholder.com/150'
+  },
+  {
+    id: 3,
+    title: 'Laptop',
+    description: 'Powerful laptop for work and play.',
+    price: 1299,
+    imageUrl: 'https://via.placeholder.com/150'
+  },
+  {
+    id: 4,
+    title: 'Smartwatch',
+    description: 'Track your health and notifications.',
+    price: 199,
+    imageUrl: 'https://via.placeholder.com/150'
+  },
+  {
+    id: 5,
+    title: 'E-book Reader',
+    description: 'Read books on the go.',
+    price: 99,
+    imageUrl: 'https://via.placeholder.com/150'
+  },
+  {
+    id: 6,
+    title: 'Bluetooth Speaker',
+    description: 'High quality sound anywhere.',
+    price: 89,
+    imageUrl: 'https://via.placeholder.com/150'
+  }
+])
+
 
 const router = useRouter()
 

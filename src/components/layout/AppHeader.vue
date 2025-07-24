@@ -2,7 +2,10 @@
   <header class="header">
     <div class="header-container">
       <div class="header-content">
-        <div class="logo">TUNI</div>
+        <router-link to="/" class="logo">
+          <img src="/logo-icon.svg" alt="TUNI 아이콘" class="logo-icon" />
+          <span class="logo-text">TUNI</span>
+        </router-link>
           <nav class="navbar">
             <ul class="navbar-nav">
               <li class="nav-item">
@@ -29,7 +32,6 @@
           </button>
         </div>
         <div class="right">
-          <button @click="goToMy"  style="margin-right: 10px;">마이페이지</button>
           <button @click="goToLogin">로그인</button>
         </div>
       </div>
@@ -65,9 +67,6 @@ function goToLogin() {
   router.push('/Login')
 }
 
-function goToMy() {
-  router.push('/My')
-}
 </script>
 
 

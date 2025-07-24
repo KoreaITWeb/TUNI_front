@@ -5,6 +5,22 @@
     font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
   } */
 
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 아이콘과 텍스트 사이 간격 */
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: #111827;
+    cursor: pointer;
+    text-decoration: none; /* 링크 밑줄 제거 */
+  }
+  
+  .logo:hover {
+    color: #2575fc; /* 호버 시 색 변경 */
+  }
+
   .header {
     /* display: flex;
     justify-content: space-between;
@@ -182,7 +198,7 @@
   .navbar-nav {
     display: flex;
     flex-direction: row;
-    gap: 70px;  /* 간격을 40px로 넓힘 */
+    gap: 100px;  /* 간격을 40px로 넓힘 */
     padding: 0;
     margin: 0;
     list-style: none;

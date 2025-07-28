@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import MainPage from '@/pages/MainPage.vue'
 import MyPage from '@/pages/MyPage.vue'
+import RegisterForm from '@/pages/RegisterForm.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import ListPage from '@/pages/ListPage.vue'
 const routes = [
@@ -23,6 +24,11 @@ const routes = [
     path: '/Login',
     name: 'login',
     component: LoginPage
+  },
+  {
+    path: '/register-form',
+    name: 'RegisterForm',
+    component: RegisterForm,
   },
   {
     path: '/about',

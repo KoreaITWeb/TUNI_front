@@ -66,7 +66,7 @@ const universities = ref([])           // 대학 리스트
 // 페이지 진입 시 학교 리스트 불러오기
 onMounted(async () => {
   try {
-    const response = await axios.get('/api/school/verify') // 백엔드에서 학교 리스트 받기
+    const response = await axios.get('/api/auth/universities') // 백엔드에서 학교 리스트 받기
     universities.value = response.data
   } catch (err) {
     console.error('학교 목록 불러오기 실패:', err)
@@ -83,7 +83,7 @@ async function onButtonClick() {
   if (!showCodeInput.value) {
     // 코드 전송
     try {
-      const response = await axios.post('/api/school/verify', {
+      const response = await axios.post('/api/auth/code/send', {
         email: email.value,
         universityId: universityId.value,
       })
@@ -99,7 +99,7 @@ async function onButtonClick() {
   } else {
     // 코드 인증
     try {
-      const response = await axios.post('/api/auth/verify-code', {
+      const response = await axios.post('/api/auth/code/verify', {
         email: email.value,
         code: code.value,
         universityId: universityId.value,

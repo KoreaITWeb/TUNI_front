@@ -45,8 +45,6 @@ const submitNickname = async () => {
 
     const response = await axios.get('/api/auth/check-nickname', {
       params: {
-        email,
-        code,
         nickname: nickname.value.trim(),
       },
     })
@@ -68,7 +66,16 @@ const submitNickname = async () => {
     // localStorage.setItem('token', '받은 토큰')
 
     alert('닉네임 설정이 완료되었습니다!')
-    router.push('/main')
+    const response2 = await axios.post('/api/auth/register', {
+        email: email,
+        code: code,
+        userId: nickname.value.trim(),
+    })
+    if (response2.data){
+      router.push('/main')
+    } else {
+      alert('계정 생성 도중 오류가 발생하였습니다')
+    }
 
   } catch (err) {
     console.error('닉네임 설정 실패:', err)

@@ -4,6 +4,7 @@ import MyPage from '@/pages/MyPage.vue'
 import RegisterForm from '@/pages/RegisterForm.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import ListPage from '@/pages/ListPage.vue'
+import SellPage from '@/pages/SellPage.vue'
 const routes = [
   {
     path: '/main',
@@ -24,6 +25,11 @@ const routes = [
     path: '/Login',
     name: 'login',
     component: LoginPage
+  },
+  {
+    path: '/Sell',
+    name: 'Sell',
+    component: SellPage
   },
   {
     path: '/register-form',

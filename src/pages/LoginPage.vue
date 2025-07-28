@@ -54,6 +54,7 @@ import { ref, onMounted } from 'vue'
 import '@/assets/styles/pages/LoginPage.css';
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { isLogin, userNickname } from '@/composables/useAuth'
 
 const router = useRouter()
 
@@ -114,6 +115,9 @@ async function onButtonClick() {
         alert('로그인 성공!')
         localStorage.setItem('accessToken', result.token.accessToken)
         localStorage.setItem('refreshToken', result.token.refreshToken)
+
+        isLogin.value = true
+        userNickname.value = result.nickname 
         router.push('/main')
       }
     } catch (err) {

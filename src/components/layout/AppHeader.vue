@@ -32,7 +32,13 @@
           </button>
         </div>
         <div class="right">
-          <button @click="goToLogin">Login</button>
+          <template v-if="isLogin">
+            <span class="nickname">{{ userNickname }}님</span>
+            <button @click="logout">Logout</button>
+          </template>
+          <template v-else>
+            <button @click="goToLogin">Login</button>
+          </template>
         </div>
       </div>
     </div>
@@ -44,6 +50,8 @@
 
 import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { isLogin, userNickname } from '@/composables/useAuth'
+
 
 const router = useRouter()
 
@@ -67,6 +75,13 @@ function goToLogin() {
   router.push('/Login')
 }
 
+function logout() {
+  isLogin.value = false
+  userNickname.value = ''
+  localStorage.removeItem('token') // 필요 시
+  localStorage.removeItem('nickname')
+  router.push('/login')
+}
 </script>
 
 

@@ -121,7 +121,10 @@ async function onButtonClick() {
 
         // 토큰을 디코딩해서 payload 정보 추출
         const payload = decodeJwt(tokenData.accessToken);
-        
+        console.log('Decoded JWT payload:', payload);
+        localStorage.setItem('userId', payload.userId);
+        console.log('localStorage userId after set:', localStorage.getItem('userId')); 
+
         if (payload) {
             // 필요한 사용자 정보를 localStorage에 별도로 저장
             localStorage.setItem('userId', payload.userId);

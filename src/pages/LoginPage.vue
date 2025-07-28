@@ -5,12 +5,12 @@
 
         <!-- ✅ 1. 대학교 선택 -->
         <label for="university">대학교 선택</label>
-        <select id="university" v-model="universityId" required>
+        <select id="university" v-model="universityId" required :disabled="showCodeInput">
           <option value="">-- 대학교를 선택하세요 --</option>
           <option
             v-for="uni in universities"
-            :key="uni.id"
-            :value="uni.id"
+            :key="uni.schoolId"
+            :value="uni.schoolId"
           >
             {{ uni.name }}
           </option>
@@ -75,7 +75,7 @@ onMounted(async () => {
 })
 
 async function onButtonClick() {
-  if (universityId.value) {
+  if (!universityId.value) {
     alert('대학교를 선택해주세요.')
     return
   }
@@ -83,7 +83,7 @@ async function onButtonClick() {
   if (!showCodeInput.value) {
     // 코드 전송
     try {
-      const response = await axios.post('/api/auth/send-code', {
+      const response = await axios.post('/api/school/verify', {
         email: email.value,
         universityId: universityId.value,
       })

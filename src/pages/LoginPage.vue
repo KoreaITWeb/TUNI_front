@@ -5,12 +5,12 @@
 
         <!-- ✅ 1. 대학교 선택 -->
         <label for="university">대학교 선택</label>
-        <select id="university" v-model="universityId" required>
+        <select id="university" v-model="universityId" required :disabled="showCodeInput">
           <option value="">-- 대학교를 선택하세요 --</option>
           <option
             v-for="uni in universities"
-            :key="uni.id"
-            :value="uni.id"
+            :key="uni.schoolId"
+            :value="uni.schoolId"
           >
             {{ uni.name }}
           </option>
@@ -54,6 +54,7 @@ import { ref, onMounted } from 'vue'
 import '@/assets/styles/pages/LoginPage.css';
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { isLogin, userNickname } from '@/composables/useAuth'
 
 const router = useRouter()
 
@@ -66,7 +67,7 @@ const universities = ref([])           // 대학 리스트
 // 페이지 진입 시 학교 리스트 불러오기
 onMounted(async () => {
   try {
-    const response = await axios.get('/api/school/verify') // 백엔드에서 학교 리스트 받기
+    const response = await axios.get('/api/auth/universities') // 백엔드에서 학교 리스트 받기
     universities.value = response.data
   } catch (err) {
     console.error('학교 목록 불러오기 실패:', err)
@@ -75,7 +76,7 @@ onMounted(async () => {
 })
 
 async function onButtonClick() {
-  if (universityId.value) {
+  if (!universityId.value) {
     alert('대학교를 선택해주세요.')
     return
   }
@@ -83,7 +84,7 @@ async function onButtonClick() {
   if (!showCodeInput.value) {
     // 코드 전송
     try {
-      const response = await axios.post('/api/auth/send-code', {
+      const response = await axios.post('/api/auth/code/send', {
         email: email.value,
         universityId: universityId.value,
       })
@@ -99,7 +100,7 @@ async function onButtonClick() {
   } else {
     // 코드 인증
     try {
-      const response = await axios.post('/api/auth/verify-code', {
+      const response = await axios.post('/api/auth/code/verify', {
         email: email.value,
         code: code.value,
         universityId: universityId.value,
@@ -112,14 +113,42 @@ async function onButtonClick() {
         router.push(`/register-form?email=${email.value}&code=${code.value}`)
       } else {
         alert('로그인 성공!')
-        localStorage.setItem('accessToken', result.token.accessToken)
-        localStorage.setItem('refreshToken', result.token.refreshToken)
+        const tokenData = result.token;
+
+        // 토큰 자체를 저장
+        localStorage.setItem('accessToken', tokenData.accessToken)
+        localStorage.setItem('refreshToken', tokenData.refreshToken)
+
+        // 토큰을 디코딩해서 payload 정보 추출
+        const payload = decodeJwt(tokenData.accessToken);
+        
+        if (payload) {
+            // 필요한 사용자 정보를 localStorage에 별도로 저장
+            localStorage.setItem('userId', payload.userId);
+            localStorage.setItem('schoolId', payload.schoolId);
+        }
+        isLogin.value = true
+        userNickname.value = localStorage.getItem('userId');
         router.push('/main')
       }
     } catch (err) {
       console.error('코드 인증 실패:', err)
       alert(err.response?.data?.message || '코드 인증에 실패했습니다.')
     }
+  }
+}
+
+function decodeJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
   }
 }
 </script>

@@ -6,7 +6,7 @@ import LoginPage from '@/pages/LoginPage.vue'
 import ListPage from '@/pages/ListPage.vue'
 const routes = [
   {
-    path: '/',
+    path: '/main',
     name: 'main',
     component: MainPage
   },

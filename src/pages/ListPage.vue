@@ -35,7 +35,7 @@
         </div>
 
         <!-- 카드 영역 -->
-        <div class="product-list">
+        <div class="product-list d-flex flex-wrap gap-3">
           <div
             class="product-card"
             style="width: 12rem; cursor:pointer;"
@@ -51,25 +51,22 @@
             </div>
           </div>
         </div>
+      </div> <!-- col-md-9 끝 -->
+    </div> <!-- row 끝 -->
 
-      
-      <!-- 페이지네이션 -->
-      <nav class="mt-4" style="display: flex; justify-content: center;">
-        <ul class="pagination">
-          <li class="page-item disabled"><a class="page-link">← Previous</a></li>
-          <li class="page-item active"><a class="page-link">1</a></li>
-          <li class="page-item"><a class="page-link">2</a></li>
-          <li class="page-item"><a class="page-link">3</a></li>
-          <li class="page-item"><a class="page-link">…</a></li>
-          <li class="page-item"><a class="page-link">99</a></li>
-          <li class="page-item"><a class="page-link">100</a></li>
-          <li class="page-item"><a class="page-link">Next →</a></li>
-        </ul>
-      </nav>
-
-
-      </div>
-    </div>
+    <!-- ✅ 페이지네이션: 전체 가운데 정렬 -->
+    <nav class="mt-4" style="display: flex; justify-content: center;">
+      <ul class="pagination">
+        <li class="page-item disabled"><a class="page-link">← Previous</a></li>
+        <li class="page-item active"><a class="page-link">1</a></li>
+        <li class="page-item"><a class="page-link">2</a></li>
+        <li class="page-item"><a class="page-link">3</a></li>
+        <li class="page-item"><a class="page-link">…</a></li>
+        <li class="page-item"><a class="page-link">99</a></li>
+        <li class="page-item"><a class="page-link">100</a></li>
+        <li class="page-item"><a class="page-link">Next →</a></li>
+      </ul>
+    </nav>
   </div>
 </template>
 
@@ -78,7 +75,6 @@ import '@/assets/styles/pages/ListPage.css';
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-/* const products = ref([])  // 기존 data의 products 배열 */ /* 기본 카드열 */
 const products = ref([
   {
     id: 1,
@@ -124,12 +120,9 @@ const products = ref([
   }
 ])
 
-
 const router = useRouter()
 
 function goToDetail(productId) {
   router.push({ name: 'ProductDetail', params: { id: productId } })
 }
 </script>
-
-

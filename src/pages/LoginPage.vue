@@ -113,17 +113,42 @@ async function onButtonClick() {
         router.push(`/register-form?email=${email.value}&code=${code.value}`)
       } else {
         alert('로그인 성공!')
-        localStorage.setItem('accessToken', result.token.accessToken)
-        localStorage.setItem('refreshToken', result.token.refreshToken)
+        const tokenData = result.token;
 
+        // 토큰 자체를 저장
+        localStorage.setItem('accessToken', tokenData.accessToken)
+        localStorage.setItem('refreshToken', tokenData.refreshToken)
+
+        // 토큰을 디코딩해서 payload 정보 추출
+        const payload = decodeJwt(tokenData.accessToken);
+        
+        if (payload) {
+            // 필요한 사용자 정보를 localStorage에 별도로 저장
+            localStorage.setItem('userId', payload.userId);
+            localStorage.setItem('schoolId', payload.schoolId);
+        }
         isLogin.value = true
-        userNickname.value = result.nickname 
+        userNickname.value = localStorage.getItem('userId');
         router.push('/main')
       }
     } catch (err) {
       console.error('코드 인증 실패:', err)
       alert(err.response?.data?.message || '코드 인증에 실패했습니다.')
     }
+  }
+}
+
+function decodeJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
   }
 }
 </script>

@@ -146,7 +146,8 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted} from 'vue'
+
 import { 
   Check, 
   Star, 
@@ -158,16 +159,45 @@ import {
   ShoppingCart 
 } from 'lucide-vue-next'
 import '@/assets/styles/pages/Mypage.css';
+
+import axios from 'axios'
 const activeMenu = ref('wishlist')
 
 const user = reactive({
-  name: '김대학',
+  name: '',
   department: '컴퓨터공학과',
   grade: '3',
   profileImage: '/placeholder.svg?height=96&width=96',
   rating: 4.8,
   transactionCount: 23
 })
+
+onMounted(async () => {
+  const userId = localStorage.getItem('userId');
+  console.log("현재 저장된 userId: " , localStorage.getItem('userId'));
+
+  if (!userId) {
+    console.error('사용자 ID가 없습니다.');
+    return;
+  }
+
+  try {
+    const res = await axios.get('/api/auth/mypage', {
+      params: { userId }
+    });
+    console.log('API 응답 데이터:', res.data);
+    user.value = res.data; 
+    Object.assign(user, res.data);
+    user.name = res.data.userId; 
+    console.log('업데이트된 user 객체:', user);
+  } catch (err) {
+    console.error('사용자 정보 로딩 실패:', err);
+  }
+});
+
+
+
+
 
 const stats = reactive({
   selling: 5,

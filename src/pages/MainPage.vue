@@ -64,7 +64,7 @@
             </div>
             <div class="product-info">
               <h3 class="product-title">{{ product.title }}</h3>
-              <p class="product-price">{{ product.price.toLocaleString() }}원</p>
+              <p class="product-price">{{ product.price.toLocaleString() }}$</p>
               <div class="product-meta">
                 <span class="product-location">{{ product.location }}</span>
                 <span class="product-time">{{ product.timeAgo }}</span>

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import MainPage from '@/pages/MainPage.vue'
 import MyPage from '@/pages/MyPage.vue'
 import RegisterForm from '@/pages/RegisterForm.vue'
@@ -39,10 +40,15 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
   }
 ]
-
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
-})
-
+});
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  // Pinia 스토어는 앱이 생성될 때 초기화되므로,
+  // 라우터 가드에서 로그인 상태를 확인하는 것이 안전합니다.
+  authStore.checkLoginStatus();
+  next();
+});
 export default router

@@ -2,7 +2,7 @@
   <header class="header">
     <div class="header-container">
       <div class="header-content">
-        <router-link to="/" class="logo">
+        <router-link to="/main" class="logo">
           <img src="/logo-icon.svg" alt="TUNI 아이콘" class="logo-icon" />
           <span class="logo-text">TUNI</span>
         </router-link>
@@ -32,8 +32,8 @@
           </button>
         </div>
         <div class="right">
-          <template v-if="isLogin">
-            <span class="nickname">{{ userNickname }}님</span>
+          <template v-if="authStore.isLogin">
+            <span class="nickname">{{ authStore.userId }}님</span>
             <button @click="logout">Logout</button>
           </template>
           <template v-else>
@@ -50,9 +50,9 @@
 
 import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { isLogin, userNickname } from '@/composables/useAuth'
+import { useAuthStore } from '@/stores/auth'
 
-
+const authStore = useAuthStore()
 const router = useRouter()
 
 function goToShop() {
@@ -76,11 +76,9 @@ function goToLogin() {
 }
 
 function logout() {
-  isLogin.value = false
-  userNickname.value = ''
-  localStorage.removeItem('token') // 필요 시
-  localStorage.removeItem('nickname')
-  router.push('/login')
+  authStore.logout()
+  alert('로그아웃되었습니다.')
+  router.push('/login') // 로그아웃 후 로그인 페이지로 이동
 }
 </script>
 

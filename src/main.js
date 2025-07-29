@@ -4,18 +4,18 @@ import router from './router'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '@/assets/styles/global/layout.css';
 import axios from 'axios'
-import { isLogin, userNickname } from '@/composables/useAuth' 
+import { createPinia } from 'pinia'
 
-// 로그인 상태 복원 (추가)
-const token = localStorage.getItem('token')
-const nickname = localStorage.getItem('nickname')
+const app = createApp(App)
+const pinia = createPinia()
 
-if (token && nickname) {
-  isLogin.value = true
-  userNickname.value = nickname
-}
+// createApp(App).use(router).use(router).use(router).mount('#app')
+// app.use(pinia)
 
-createApp(App).use(router).use(router).use(router).mount('#app')
+app.use(router)
+app.use(pinia) // ◀️ Vue 앱에 Pinia 연결
+
+app.mount('#app')
 
 axios.defaults.baseURL = 'http://localhost:8443'  // 백엔드 서버 주소
 axios.defaults.withCredentials = true 

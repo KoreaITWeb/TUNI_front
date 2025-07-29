@@ -24,7 +24,10 @@ import { ref, onMounted } from 'vue'
 import '@/assets/styles/pages/RegisterForm.css';
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import { isLogin, userNickname } from '@/composables/useAuth'
+import { useAuthStore } from '@/stores/auth'
+
+// 토큰 관련
+const authStore = useAuthStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -56,22 +59,15 @@ const submitNickname = async () => {
       return
     }
 
-    // 닉네임 직접 저장 (서버가 따로 주지 않으므로)
-    userNickname.value = nickname.value.trim()
-    isLogin.value = true
-
-    // 로컬스토리지 저장
-    localStorage.setItem('nickname', userNickname.value)
-    // 토큰은 로그인 완료 시 받은 걸 사용하세요.
-    // localStorage.setItem('token', '받은 토큰')
-
-    alert('닉네임 설정이 완료되었습니다!')
     const response2 = await axios.post('/api/auth/register', {
         email: email,
         code: code,
         userId: nickname.value.trim(),
     })
     if (response2.data){
+      alert('닉네임 설정이 완료되었습니다!')
+      const result = response2.data
+      authStore.login(result.token) 
       router.push('/main')
     } else {
       alert('계정 생성 도중 오류가 발생하였습니다')

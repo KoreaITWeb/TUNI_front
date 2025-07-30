@@ -6,7 +6,13 @@ import RegisterForm from '@/pages/RegisterForm.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import ListPage from '@/pages/ListPage.vue'
 import SellPage from '@/pages/SellPage.vue'
+import ChatPage from '@/pages/ChatPage.vue'
+
 const routes = [
+  { path: '/Chat',
+    name: 'chat',
+    component: ChatPage
+  },
   {
     path: '/main',
     name: 'main',

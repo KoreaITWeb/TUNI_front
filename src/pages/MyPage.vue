@@ -18,7 +18,7 @@
             </div>
             <div class="profile-details">
               <h2 class="profile-name">{{ user.name }}</h2>
-              <p class="profile-department">{{ user.department }} {{ user.grade }}학년</p>
+              <p class="profile-department">{{ user.schoolname }} </p>
               <div class="profile-rating">
                 <div class="rating-stars">
                   <Star class="star-icon" />
@@ -141,26 +141,20 @@
       </div>
     </div>
 
-    
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted} from 'vue'
-
+import { ref, reactive, onMounted } from 'vue'
 import { 
-  Check, 
-  Star, 
-  Plus, 
-  Edit, 
-  Heart, 
-  Package, 
-  MessageSquare, 
-  ShoppingCart 
+  Check, Star, Plus, Edit, Heart, 
+  Package, MessageSquare, ShoppingCart 
 } from 'lucide-vue-next'
-import '@/assets/styles/pages/Mypage.css';
-
+import '@/assets/styles/pages/Mypage.css'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 const activeMenu = ref('wishlist')
 
 const user = reactive({
@@ -173,27 +167,33 @@ const user = reactive({
 })
 
 onMounted(async () => {
-  const userId = localStorage.getItem('userId');
-  console.log("현재 저장된 userId: " , localStorage.getItem('userId'));
-
-  if (!userId) {
-    console.error('사용자 ID가 없습니다.');
-    return;
+  const userId = authStore.userId  // ✅ store에서 가져옴
+  const schoolId = authStore.schoolId
+  console.log("현재 저장된 userId: ", userId)
+  console.log("현재 저장된 schoolId: ", schoolId)
+  
+  if (!userId || !schoolId) {
+    console.error('사용자 ID 또는 학교 ID가 없습니다.')
+    return
   }
 
   try {
-    const res = await axios.get('/api/auth/mypage', {
-      params: { userId }
-    });
-    console.log('API 응답 데이터:', res.data);
-    user.value = res.data; 
-    Object.assign(user, res.data);
-    user.name = res.data.userId; 
-    console.log('업데이트된 user 객체:', user);
+    const res = await axios.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
+    console.log('API 응답 데이터:', res.data)
+    
+    Object.assign(user, res.data)
+    //user.name = res.data.userId
+    //user.schoolname = res.data.schoolId
+    user.name = res.data.user.userId; // 또는 user.name이 이미 있을 수 있음
+    user.schoolname = res.data.university.name;
+    
+    console.log('업데이트된 user 객체:', user)
+    
   } catch (err) {
-    console.error('사용자 정보 로딩 실패:', err);
+    console.error('사용자 정보 로딩 실패:', err)
   }
-});
+})
+
 
 
 

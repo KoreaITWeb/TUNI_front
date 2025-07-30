@@ -4,16 +4,16 @@
       <h3>Upload Item</h3>
 
       <label>Item Name</label>
-      <input v-model="item.title" placeholder="상품명" class="form-control" />
+      <input v-model="title" placeholder="제목" class="form-control" required/>
 
       <label>Price</label>
-      <input v-model="item.price" placeholder="가격" type="number" class="form-control" />
+      <input v-model="price" placeholder="가격" type="number" class="form-control" required/>
 
       <label>Description</label>
-      <textarea v-model="item.description" placeholder="설명" class="form-control"></textarea>
+      <textarea v-model="content" placeholder="설명" class="form-control" required></textarea>
 
       <label>Photo</label>
-      <input type="file" @change="handleFileUpload" />
+      <input type="file" />
 
       <button type="button" @click="submitItem">Upload Item</button>
     </form>
@@ -21,36 +21,53 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useProductStore } from '@/store/productStore'
+import axios from 'axios'
+import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
+const authStore = useAuthStore()
+const { isLogin, userId, schoolId } = storeToRefs(authStore)
 const router = useRouter()
-const productStore = useProductStore()
 
-const item = ref({
-  title: '',
-  price: '',
-  description: '',
-  imageUrl: ''
-})
+const title = ref('')
+const price = ref('')
+const content = ref('')
 
-function handleFileUpload(event) {
-  const file = event.target.files[0]
-  if (file) {
-    item.value.imageUrl = URL.createObjectURL(file) // 임시 이미지 URL
+onMounted(() => {
+  if (!isLogin) {
+    alert('로그인 후 이용가능합니다.');
+    router.push('/login');
   }
-}
+});
+
+// function handleFileUpload(event) {
+//   const file = event.target.files[0]
+//   if (file) {
+//     let imageUrl = URL.createObjectURL(file) // 임시 이미지 URL
+//   }
+// }
 
 
-function submitItem() {
-  if (!item.value.title.trim() || !item.value.price) {
-    alert('이름과 가격을 입력하세요')
-    return
+async function submitItem() {
+  try {
+    const response = await axios.post('/board/register', {
+          title: title.value,
+          price: price.value,
+          content: content.value,
+          userId: userId.value,
+          schoolId: schoolId.value,
+    });
+    if (response.status === 200){
+      alert('상품 등록을 완료하였습니다.');
+      router.push('/shop');
+    }
+  } catch (err) {
+    console.log('상품등록 실패:', err);
+    alert('상품 등록 실패하였습니다.');
+    router.push('/sell');
   }
-
-  productStore.addProduct({ ...item.value })
-  router.push('/shop')
 }
 </script>
 

@@ -8,11 +8,11 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
-const { isLogin, userNickname } = storeToRefs(authStore) // ◀️ 반응형 상태 가져오기
+const { isLogin, userId, schoolId } = storeToRefs(authStore) // ◀️ 반응형 상태 가져오기
 
 // isLogin 값이 바뀔 때마다 자동으로 계산되는 computed 속성
 const welcomeMessage = computed(() => {
-  return isLogin.value ? `${userNickname.value}님 환영합니다.` : '로그인이 필요합니다.'
+  return isLogin.value ? `${userId.value}님 환영합니다.` : '로그인이 필요합니다.'
 })
 </script>
 */
@@ -26,7 +26,7 @@ const authStore = useAuthStore()
 
 <template>
   <div v-if="authStore.isLogin">
-    <p>{{ authStore.userNickname }}</p>
+    <p>{{ authStore.userId }}</p>
   </div>
 </template>
 */

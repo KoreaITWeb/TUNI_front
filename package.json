@@ -11,6 +11,7 @@
     "axios": "^1.11.0",
     "bootstrap": "^5.3.7",
     "core-js": "^3.8.3",
+    "date-fns": "^4.1.0",
     "lucide-vue-next": "^0.525.0",
     "pinia": "^3.0.3",
     "vue": "^3.2.13",
@@ -24,7 +25,7 @@
     "@vue/cli-plugin-router": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
     "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3"
+    "eslint-plugin-vue": "^8.7.1"
   },
   "eslintConfig": {
     "root": true,

@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '@/assets/styles/global/layout.css';
 import axios from 'axios'
+import './assets/main.css'
 
 const app = createApp(App)
 const pinia = createPinia()

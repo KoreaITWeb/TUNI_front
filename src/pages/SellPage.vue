@@ -1,27 +1,63 @@
 <template>
-  <div class="sell-page-container">
-    <form class="upload-form">
-      <h3>Upload Item</h3>
+  <div class="container max-w-2xl mx-auto my-16 p-8 border rounded-lg bg-white shadow-md">
+    <form @submit.prevent="submitItem">
+      <h3 class="text-2xl font-bold mb-6">Upload Item</h3>
 
-      <label>Item Name</label>
-      <input v-model="title" placeholder="제목" class="form-control" required/>
+      <div class="space-y-4">
+        
+        <div>
+          <label for="title" class="form-label font-semibold">Item Name</label>
+          <input v-model="title" id="title" placeholder="제목" class="form-control" required/>
+        </div>
 
-      <label>Price</label>
-      <input v-model="price" placeholder="가격" type="number" class="form-control" required/>
+        <div>
+          <label for="category" class="form-label font-semibold">Category</label>
+          <select v-model="category" id="category" class="form-select" required>
+            <option value="" disabled>-- 카테고리를 선택하세요 --</option>
+            <option v-for="cat in categories" :key="cat" :value="cat">
+              {{ cat }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label for="price" class="form-label font-semibold">Price</label>
+          <input v-model="price" id="price" placeholder="가격" type="number" class="form-control" required/>
+        </div>
+        
+        <div>
+          <label for="content" class="form-label font-semibold">Description</label>
+          <textarea v-model="content" id="content" placeholder="설명" class="form-control" rows="4" required></textarea>
+        </div>
+        
+        <div>
+          <label for="photo" class="form-label font-semibold">Photo</label>
+          <input type="file" @change="handleFileUpload" multiple accept="image/*" class="form-control"/>
+        </div>
 
-      <label>Description</label>
-      <textarea v-model="content" placeholder="설명" class="form-control" required></textarea>
+        <p v-if="previewImages.length > 0" class="text-sm text-gray-500">
+          대표 이미지로 사용할 사진을 클릭하세요.
+        </p>
 
-      <label>Photo</label>
-      <input type="file" @change="handleFileUpload" multiple accept="image/*" class="form-control"/>
-
-      <div v-if="previewImages.length > 0" class="image-preview">
-        <div v-for="(image, index) in previewImages" :key="index" class="preview-item">
-          <img :src="image" alt="미리보기 이미지"/>
+        <div v-if="previewImages.length > 0" class="flex flex-wrap gap-4 mt-2">
+          <div
+            v-for="(image, index) in previewImages"
+            :key="index"
+            class="relative cursor-pointer border-3 rounded-lg overflow-hidden transition-all"
+            :class="index === representativeIndex ? 'border-blue-500' : 'border-transparent'"
+            @click="setRepresentative(index)"
+          >
+            <img :src="image.url" class="w-24 h-24 object-cover block" alt="미리보기 이미지"/>
+            <div 
+              v-if="index === representativeIndex"
+              class="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
+            >
+              ✓
+            </div>
+          </div>
         </div>
       </div>
 
-      <button type="button" @click="submitItem">Upload Item</button>
+      <button type="submit" class="btn btn-dark w-full mt-6 py-2.5">Upload Item</button>
     </form>
   </div>
 </template>
@@ -40,69 +76,77 @@ const router = useRouter()
 const title = ref('')
 const price = ref('')
 const content = ref('')
-
 const selectedFiles = ref([])
 const previewImages = ref([])
+const representativeIndex = ref(0); // 대표 사진 저장할 변수
+
+const categories = ref([
+  'Electronics', 'Books', 'Clothings', 'Home & kitchen', 
+  'shoes', 'Beauty', 'Hobby'
+]);
+const category = ref(''); // 선택된 카테고리를 저장할 변수
 
 onMounted(() => {
-  if (!isLogin) {
+  if (!isLogin.value) {
     alert('로그인 후 이용가능합니다.');
     router.push('/login');
   }
 });
 
-// 파일이 선택되었을 때 실행되는 함수
+function setRepresentative(index) {
+  representativeIndex.value = index;
+}
+
 function handleFileUpload(event) {
   const files = event.target.files;
   if (!files) return;
 
   selectedFiles.value = Array.from(files);
-  
-  // 기존 미리보기 이미지 초기화
   previewImages.value = [];
   
-  // 선택된 각 파일에 대해 미리보기 URL 생성
   for (const file of selectedFiles.value) {
-    previewImages.value.push(URL.createObjectURL(file));
+    previewImages.value.push({
+      url: URL.createObjectURL(file),
+      file: file
+    });
   }
+  representativeIndex.value = 0;
 }
 
 async function submitItem() {
-  if (!title.value || !price.value || !content.value) {
+  if (!title.value || !category.value || !price.value || !content.value) {
     alert('모든 필드를 입력해주세요.');
     return;
   }
 
   try {
-    // --- 텍스트 정보 등록하여 상품 등록 및 boardId 받아오기 ---
-    const response = await axios.post('/board/register', {
-          title: title.value,
-          price: price.value,
-          content: content.value,
-          userId: userId.value,
-          schoolId: schoolId.value,
+    const boardResponse = await axios.post('/board/register', {
+      title: title.value,
+      category: category.value,
+      price: price.value,
+      content: content.value,
+      userId: userId.value,
+      schoolId: schoolId.value,
     });
 
-    const newBoardId = response.data.boardId;
+    const newBoardId = boardResponse.data.boardId;
 
     if (!newBoardId) {
       throw new Error('게시물 ID를 받아오지 못했습니다.');
     }
 
-    // --- 받아온 boardId와 함께 이미지 파일 업로드 ---
     if (selectedFiles.value.length > 0) {
       const imageFormData = new FormData();
       imageFormData.append('boardId', newBoardId);
+      const representativeFileName = selectedFiles.value[representativeIndex.value].name;
+      imageFormData.append('representativeFileName', representativeFileName);
       
       selectedFiles.value.forEach(file => {
         imageFormData.append('uploadFile', file);
       });
       
-      // 이미지 업로드 API 호출
       await axios.post('/images/upload', imageFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
     }
 
@@ -112,56 +156,6 @@ async function submitItem() {
   } catch (err) {
     console.log('상품등록 실패:', err);
     alert('상품 등록 실패하였습니다.');
-    router.push('/sell');
   }
 }
 </script>
-
-<style scoped>
-.sell-page-container {
-  max-width: 600px;
-  margin: 4rem auto;
-  padding: 2rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: white;
-}
-
-.upload-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.upload-form h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.upload-form input,
-.upload-form textarea {
-  padding: 0.6rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.upload-form button {
-  background-color: black;
-  color: white;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.image-preview {
-  display: flex;
-  gap: 10px;
-  margin-top: 1rem;
-}
-.preview-item img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 4px;
-}
-</style>

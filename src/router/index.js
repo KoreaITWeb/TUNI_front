@@ -50,6 +50,11 @@ const routes = [
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+  },
+  {
+    path: '/details/:id', // :id 동적으로 변하는 파라미터
+    name: 'ProductDetail',
+    component: () => import('../pages/ProductDetailPage.vue') // 상세 페이지 컴포넌트 경로
   }
 ]
 const router = createRouter({

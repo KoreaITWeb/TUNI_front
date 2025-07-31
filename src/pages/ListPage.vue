@@ -137,7 +137,7 @@ async function fetchProducts() {
 
 // 상세 페이지로 이동하는 함수
 function goToDetail(boardId) {
-  router.push(`/product/${boardId}`);
+  router.push(`/details/${boardId}`);
 }
 
 // 컴포넌트가 화면에 마운트될 때 함수를 실행

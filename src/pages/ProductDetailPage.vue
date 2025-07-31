@@ -41,9 +41,20 @@
             <h5 class="font-bold text-lg mb-2">상품 설명</h5>
             <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ product.content }}</p>
           </div>
-          <div class="action-buttons flex gap-4">
-            <button class="flex-1 btn btn-outline-danger">❤️ 찜하기</button>
-            <button class="flex-1 btn btn-dark">채팅하기</button>
+          <div class="action-buttons flex gap-4 mt-auto pt-6 border-t">
+            <template v-if="isOwner">
+                <button @click="editProduct" class="flex-1 btn btn-secondary">
+                    수정하기
+                </button>
+                <button @click="deleteProduct" class="flex-1 btn btn-danger">
+                    삭제하기
+                </button>
+            </template>
+            
+            <template v-else>
+                <button class="flex-1 btn btn-outline-danger">❤️ 찜하기</button>
+                <button class="flex-1 btn btn-dark">채팅하기</button>
+            </template>
           </div>
         </div>
       </div>
@@ -52,11 +63,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
+import { storeToRefs } from 'pinia';
 
 const route = useRoute();
+const router = useRouter()
 const productId = ref(null);
 
 // API로부터 받아온 데이터를 저장할 상태 변수
@@ -66,6 +80,36 @@ const images = ref([]);
 const mainImage = ref(''); // 큰 대표 이미지 URL
 const isLoading = ref(true);
 const error = ref(null);
+
+// --- Pinia 스토어에서 로그인 정보 가져오기 ---
+const authStore = useAuthStore();
+const { userId: loggedInUserId } = storeToRefs(authStore);
+
+// 현재 사용자가 판매자인지 확인하는 computed 속성
+const isOwner = computed(() => {
+  // seller 정보와 로그인한 사용자 ID가 모두 존재하고, 두 ID가 일치하는지 확인
+  return seller.value && loggedInUserId.value && seller.value.userId === loggedInUserId.value;
+});
+
+// 수정 페이지로 이동하는 함수
+function editProduct() {
+  router.push(`/product/edit/${productId.value}`);
+}
+
+// 상품을 삭제하는 함수
+async function deleteProduct() {
+  if (confirm('정말로 이 상품을 삭제하시겠습니까?')) {
+    try {
+      // 백엔드에 DELETE 요청 보내기 (API 경로는 예시입니다)
+      await axios.delete(`/board/${productId.value}`);
+      alert('상품이 삭제되었습니다.');
+      router.push('/shop'); // 삭제 후 목록 페이지로 이동
+    } catch (err) {
+      console.error('상품 삭제 실패:', err);
+      alert('상품 삭제에 실패했습니다.');
+    }
+  }
+}
 
 // 썸네일을 클릭했을 때 메인 이미지를 변경하는 함수
 function changeMainImage(imageUrl) {

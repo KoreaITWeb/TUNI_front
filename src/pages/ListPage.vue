@@ -53,9 +53,11 @@
             v-for="product in products"
             :key="product.boardId" @click="goToDetail(product.boardId)"
           >
-            <img :src="product.imageUrl || '/default-image.png'" alt="상품 이미지" /> <div class="card-body">
+            <img :src="product.thumbnailUrl ? product.thumbnailUrl : '/default-image.png'" alt="상품 이미지" class="product-image"/> 
+            <div class="card-body">
               <h6 class="card-title">{{ product.title }}</h6>
-              <p class="card-text text-truncate">{{ product.content }}</p> <p class="card-text fw-bold">{{ product.price }}원</p>
+              <p class="card-text text-truncate">{{ product.content }}</p> 
+              <p class="card-text fw-bold">{{ product.price }}원</p>
             </div>
           </div>
         </div>
@@ -143,3 +145,12 @@ onMounted(() => {
   fetchProducts();
 });
 </script>
+
+<style scoped>
+/* 이미지 크기를 카드에 맞게 조정하는 CSS 추가 */
+.product-image {
+    width: 100%;
+    height: 120px; /* 원하는 높이로 조절 */
+    object-fit: cover; /* 이미지가 비율을 유지하며 꽉 차게 */
+}
+</style>

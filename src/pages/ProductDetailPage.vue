@@ -25,18 +25,42 @@
         </div>
 
         <div class="product-details flex flex-col">
-          <div v-if="seller" class="seller-info flex items-center mb-4">
-            <img src="https://via.placeholder.com/40" alt="판매자 프로필" class="w-10 h-10 rounded-full mr-3">
-            <div>
-              <p class="font-bold text-gray-800">{{ seller.nickname }}</p>
-              <p class="text-sm text-gray-500">{{ seller.universityName }}</p> </div>
+          <div v-if="seller" class="mb-4">
+            <p class="font-bold text-gray-800">{{ seller.userId }}</p>
           </div>
           <hr class="mb-6">
           <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ product.title }}</h1>
-          <p class="text-2xl font-semibold text-gray-800 mb-4">{{ product.price }}원</p>
+          <p class="text-2xl font-semibold text-gray-800 mb-4">$ {{ product.price }}</p>
+
           <div class="mb-6">
-            <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700">판매중</span>
+            <div v-if="isOwner">
+              <select 
+                v-model="product.saleStatus" 
+                @change="updateStatus"
+                class="inline-block rounded-full px-3 py-1 text-sm font-semibold cursor-pointer"
+                :class="{ 
+                  'bg-green-200 text-green-800': product.saleStatus === 'SALE', 
+                  'bg-gray-300 text-gray-800': product.saleStatus === 'SOLD' 
+                }"
+              >
+                <option class="bg-white text-black" value="SALE">판매중</option>
+                <option class="bg-white text-black" value="SOLD">판매완료</option>
+              </select>
+            </div>
+
+            <div v-else>
+              <span
+                class="inline-block rounded-full px-3 py-1 text-sm font-semibold"
+                :class="{ 
+                  'bg-green-200 text-green-800': product.saleStatus === 'SALE', 
+                  'bg-gray-300 text-gray-800': product.saleStatus === 'SOLD' 
+                }"
+              >
+                {{ product.saleStatus === 'SALE' ? '판매중' : '판매완료' }}
+              </span>
+            </div>
           </div>
+
           <div class="description flex-grow mb-6">
             <h5 class="font-bold text-lg mb-2">상품 설명</h5>
             <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ product.content }}</p>
@@ -98,10 +122,18 @@ function editProduct() {
 
 // 상품을 삭제하는 함수
 async function deleteProduct() {
+  if (!isOwner.value) return; // 주인이 아니면 실행 방지
+
   if (confirm('정말로 이 상품을 삭제하시겠습니까?')) {
     try {
       // 백엔드에 DELETE 요청 보내기 (API 경로는 예시입니다)
-      await axios.delete(`/board/${productId.value}`);
+      await axios.delete(`/board/${productId.value}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        }
+      );
       alert('상품이 삭제되었습니다.');
       router.push('/shop'); // 삭제 후 목록 페이지로 이동
     } catch (err) {
@@ -138,6 +170,30 @@ async function fetchProductDetails(id) {
     error.value = err.response?.data?.message || '상품 정보를 불러올 수 없습니다.';
   } finally {
     isLoading.value = false;
+  }
+}
+
+// Sale 상태 변경 함수
+async function updateStatus() {
+  if (!isOwner.value) return; // 주인이 아니면 실행 방지
+
+  try {
+    const newStatus = product.value.saleStatus;
+    // JWT 토큰을 헤더에 담아 PATCH 요청 전송
+    await axios.patch(`/board/${productId.value}/status`, 
+      { saleStatus: newStatus },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      }
+    );
+    alert('판매 상태가 변경되었습니다.');
+  } catch (err) {
+    console.error('상태 변경 실패:', err);
+    alert(err.response?.data?.message || '상태 변경에 실패했습니다.');
+    // 실패 시, 화면의 상태를 원래대로 되돌리기 위해 페이지를 새로고침
+    location.reload();
   }
 }
 

@@ -55,6 +55,11 @@ const routes = [
     path: '/details/:id', // :id 동적으로 변하는 파라미터
     name: 'ProductDetail',
     component: () => import('../pages/ProductDetailPage.vue') // 상세 페이지 컴포넌트 경로
+  },
+  {
+    path: '/product/edit/:id', // 상품 수정 페이지 경로
+    name: 'EditPage',
+    component: () => import('../pages/SellPage.vue') // 등록 페이지와 동일한 컴포넌트 사용
   }
 ]
 const router = createRouter({

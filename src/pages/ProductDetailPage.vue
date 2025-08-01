@@ -65,7 +65,13 @@
             <h5 class="font-bold text-lg mb-2">상품 설명</h5>
             <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ product.content }}</p>
           </div>
-          <div class="action-buttons flex gap-4 mt-auto pt-6 border-t">
+          <div class="flex justify-end items-center gap-2 mb-2 text-xs text-gray-500">
+            <p>좋아요 {{ likeCount }}</p>
+            <span class="text-gray-400">&middot;</span>
+            <p>조회수 {{ product.views }}</p>
+          </div>
+          <hr>
+          <div class="action-buttons flex gap-4 mt-auto pt-6">
             <template v-if="isOwner">
                 <button @click="editProduct" class="flex-1 btn btn-secondary">
                     수정하기
@@ -76,8 +82,17 @@
             </template>
             
             <template v-else>
-                <button class="flex-1 btn btn-outline-danger">❤️ 찜하기</button>
-                <button class="flex-1 btn btn-dark">채팅하기</button>
+                <button
+                  @click="toggleLike"
+                  class="flex-1 btn flex items-center justify-center gap-2 whitespace-nowrap py-2 px-4"
+                  :class="isLikedByUser ? 'btn-danger' : 'btn-outline-danger'"
+                >
+                  <span>❤️</span>
+                  <span class="font-semibold">좋아요</span>
+                </button>
+                <button class="flex-1 btn btn-dark py-2 px-4">
+                  채팅하기
+                </button>
             </template>
           </div>
         </div>
@@ -104,6 +119,8 @@ const images = ref([]);
 const mainImage = ref(''); // 큰 대표 이미지 URL
 const isLoading = ref(true);
 const error = ref(null);
+const likeCount = ref(0);
+const isLikedByUser = ref(false); // 현재 사용자가 이 글에 좋아요를 눌렀는지 여부
 
 // --- Pinia 스토어에서 로그인 정보 가져오기 ---
 const authStore = useAuthStore();
@@ -112,7 +129,12 @@ const { userId: loggedInUserId } = storeToRefs(authStore);
 // 현재 사용자가 판매자인지 확인하는 computed 속성
 const isOwner = computed(() => {
   // seller 정보와 로그인한 사용자 ID가 모두 존재하고, 두 ID가 일치하는지 확인
-  return seller.value && loggedInUserId.value && seller.value.userId === loggedInUserId.value;
+  console.log(seller.value);
+  console.log(loggedInUserId.value);
+  console.log('판매자 ID 타입:', typeof seller.value);       // "number"
+  console.log('로그인 ID 타입:', typeof loggedInUserId.value);
+  console.log(String(seller.value) == String(loggedInUserId.value));
+  return seller.value && loggedInUserId.value && String(seller.value) === String(loggedInUserId.value);
 });
 
 // 수정 페이지로 이동하는 함수
@@ -151,12 +173,18 @@ function changeMainImage(imageUrl) {
 // 백엔드 API를 호출하는 함수
 async function fetchProductDetails(id) {
   try {
-    const response = await axios.get(`/board/${id}`);
+    const response = await axios.get(`/board/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      }
+    });
     const data = response.data;
     
     product.value = data.board;
-    seller.value = data.user;
+    seller.value = data.board.userId;
     images.value = data.images;
+    likeCount.value = response.data.board.likes;
+    isLikedByUser.value = response.data.isLikedByUser;
 
     // 첫 번째 이미지를 메인 이미지로 설정
     if (images.value && images.value.length > 0) {
@@ -194,6 +222,26 @@ async function updateStatus() {
     alert(err.response?.data?.message || '상태 변경에 실패했습니다.');
     // 실패 시, 화면의 상태를 원래대로 되돌리기 위해 페이지를 새로고침
     location.reload();
+  }
+}
+
+// 좋아요 버튼 클릭 시 실행될 함수
+async function toggleLike() {
+  // (Optimistic Update) 서버 응답을 기다리지 않고 UI를 즉시 변경
+  isLikedByUser.value = !isLikedByUser.value;
+  likeCount.value += isLikedByUser.value ? 1 : -1;
+
+  try {
+    // 백엔드에 좋아요/취소 요청
+    await axios.post(`/board/${productId.value}/like`, {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+    });
+  } catch (err) {
+    console.error('좋아요 처리 실패:', err);
+    // 실패 시 UI를 원래 상태로 되돌림
+    alert('요청에 실패했습니다.');
+    isLikedByUser.value = !isLikedByUser.value;
+    likeCount.value += isLikedByUser.value ? 1 : -1;
   }
 }
 

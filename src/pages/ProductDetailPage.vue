@@ -90,8 +90,12 @@
                   <span>❤️</span>
                   <span class="font-semibold">좋아요</span>
                 </button>
-                <button class="flex-1 btn btn-dark py-2 px-4">
-                  채팅하기
+                 <button 
+                  @click="startChat" 
+                  class="flex-1 btn btn-dark py-2 px-4"
+                  :disabled="chatLoading"
+                >
+                  {{ chatLoading ? '채팅방 생성 중...' : '채팅하기' }}
                 </button>
             </template>
           </div>
@@ -107,11 +111,15 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
-
+import SockJS from "sockjs-client";
+import { Stomp } from "@stomp/stompjs"
 const route = useRoute();
 const router = useRouter()
 const productId = ref(null);
 
+// 채팅 관련 상태
+const chatLoading = ref(false);
+let stompClient = null;
 // API로부터 받아온 데이터를 저장할 상태 변수
 const product = ref(null);
 const seller = ref(null);
@@ -136,6 +144,124 @@ const isOwner = computed(() => {
   console.log(String(seller.value) == String(loggedInUserId.value));
   return seller.value && loggedInUserId.value && String(seller.value) === String(loggedInUserId.value);
 });
+
+// WebSocket 연결 (필요 시에만)
+const connectWebSocket = () => {
+  if (stompClient) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const socket = new SockJS("http://localhost:8443/ws-chat");
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect(
+      {},
+      () => {
+        console.log('WebSocket 연결 성공');
+        resolve();
+      },
+      (error) => {
+        console.error("WebSocket 연결 실패:", error);
+        reject(error);
+      }
+    );
+  });
+};
+
+// 채팅하기 버튼 클릭 시 실행
+const startChat = async () => {
+  if (!loggedInUserId.value) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  if (isOwner.value) {
+    alert('자신의 상품과는 채팅할 수 없습니다.');
+    return;
+  }
+
+  chatLoading.value = true;
+
+  try {
+    // WebSocket 연결 확인
+    await connectWebSocket();
+
+    // 채팅방 생성 데이터 (현재 유저 = buyer, 게시글 작성자 = seller)
+    const chatRoomData = {
+      buyerId: loggedInUserId.value,      // 현재 로그인한 유저 (구매 희망자)
+      sellerId: seller.value,             // 게시글 작성자 (판매자)
+      boardId: parseInt(productId.value)  // 게시글 번호
+    };
+
+    console.log('채팅방 생성 요청 데이터:', chatRoomData);
+
+    // 기존 채팅방 확인 (2단계 검색)
+    const existingRoomResponse = await axios.get('http://localhost:8443/api/chat/rooms', {
+      params: { userId: loggedInUserId.value }
+    });
+
+    // 1단계: 같은 게시글의 채팅방 확인
+    const sameProductRoom = existingRoomResponse.data.find(room => 
+      parseInt(room.boardId) === parseInt(productId.value) && 
+      ((room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
+       (room.sellerId === loggedInUserId.value && room.buyerId === seller.value))
+    );
+
+    // 2단계: 같은 seller-buyer 조합의 다른 채팅방 확인 (게시글 상관없이)
+    const samePairRoom = existingRoomResponse.data.find(room => 
+      ((room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
+       (room.sellerId === loggedInUserId.value && room.buyerId === seller.value))
+    );
+
+    if (sameProductRoom) {
+      // 동일한 게시글의 채팅방이 있으면 해당 채팅방으로 이동
+      console.log('동일 게시글 채팅방 발견:', sameProductRoom);
+      router.push({
+        path: '/chat',
+        query: { 
+          roomId: sameProductRoom.chatId,
+          userId: loggedInUserId.value 
+        }
+      });
+    } else if (samePairRoom) {
+      // 같은 seller-buyer 조합의 다른 게시글 채팅방이 있으면 해당 채팅방으로 이동
+      console.log('동일 사용자 조합 채팅방 발견 (다른 게시글):', samePairRoom);
+      console.log(`기존 게시글 #${samePairRoom.boardId} → 현재 게시글 #${productId.value}`);
+      
+      // 기존 채팅방으로 이동하되, 현재 게시글 정보도 함께 전달
+      router.push({
+        path: '/chat',
+        query: { 
+          roomId: samePairRoom.chatId,
+          userId: loggedInUserId.value,
+          newBoardId: parseInt(productId.value) // 새로운 게시글 ID 정보 전달
+        }
+      });
+    } else {
+      // 새 채팅방 생성 요청
+      console.log('새 채팅방 생성 요청:', chatRoomData);
+      stompClient.send("/app/createRoom", {}, JSON.stringify(chatRoomData));
+      
+      // 채팅방 생성 응답 대기 후 채팅 페이지로 이동
+      setTimeout(() => {
+        router.push({
+          path: '/chat',
+          query: { 
+            userId: loggedInUserId.value,
+            boardId: parseInt(productId.value)
+          }
+        });
+      }, 1000);
+    }
+
+  } catch (error) {
+    console.error('채팅방 생성 중 오류:', error);
+    alert('채팅방 생성에 실패했습니다. 다시 시도해주세요.');
+  } finally {
+    chatLoading.value = false;
+  }
+};
 
 // 수정 페이지로 이동하는 함수
 function editProduct() {

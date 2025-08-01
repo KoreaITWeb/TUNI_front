@@ -173,11 +173,21 @@ function changeMainImage(imageUrl) {
 // 백엔드 API를 호출하는 함수
 async function fetchProductDetails(id) {
   try {
+    try {
+        await axios.post(`/views/tracking`, {
+          userId: loggedInUserId.value,
+          boardId: productId.value
+        });
+      } catch (viewError) {
+        console.warn('조회수 추적 실패:', viewError);
+        // 조회수 추적 실패해도 상품 정보는 계속 로드
+      }
     const response = await axios.get(`/board/${id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('accessToken')}`
       }
     });
+    
     const data = response.data;
     
     product.value = data.board;

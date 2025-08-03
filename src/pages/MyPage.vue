@@ -129,7 +129,33 @@
 
         <div v-else-if="activeMenu === 'myItems'" class="content-section">
           <h3 class="content-title">내가 등록한 상품</h3>
+          <div class="product-list">
+            <template v-if="myProducts.length === 0">
+              <div>등록한 상품이 없습니다.</div>
+            </template>
+            <template v-else>
+              <div
+                class="product-card"
+                style="width: 12rem; cursor: pointer;"
+                v-for="item in myProducts"
+                :key="`${item.boardId}-${item.title}`"
+                @click="goToDetail(item.boardId)"
+              >
+                <img
+                  :src="item.thumbnailUrl"
+                  alt="상품 이미지"
+                  style="width: 100%; height: 150px; object-fit: cover;"
+                />
+                <div class="card-body">
+                  <h6 class="card-title">{{ item.title }}</h6>
+                  <p class="card-text text-truncate">{{ item.content }}</p>
+                  <p class="card-text fw-bold">{{ item.price?.toLocaleString?.() || 0 }}원</p>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
+
 
         <div v-else-if="activeMenu === 'reviews'" class="content-section">
           <h3 class="content-title">리뷰</h3>
@@ -156,10 +182,10 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const activeMenu = ref('wishlist')
-
+const myProducts = ref([])
 const user = reactive({
   name: '',
-  department: '컴퓨터공학과',
+  department: '',
   grade: '3',
   profileImage: '/placeholder.svg?height=96&width=96',
   rating: 4.8,
@@ -180,24 +206,20 @@ onMounted(async () => {
   try {
     const res = await axios.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
     console.log('API 응답 데이터:', res.data)
-    
-    Object.assign(user, res.data)
+    console.log('내 상품 목록:', res.data.productList)
+    // Object.assign(user, res.data)
     //user.name = res.data.userId
     //user.schoolname = res.data.schoolId
+    myProducts.value = res.data.productList || []
     user.name = res.data.user.userId; // 또는 user.name이 이미 있을 수 있음
     user.schoolname = res.data.university.name;
-    
+  
     console.log('업데이트된 user 객체:', user)
     
   } catch (err) {
     console.error('사용자 정보 로딩 실패:', err)
   }
 })
-
-
-
-
-
 
 const stats = reactive({
   selling: 5,

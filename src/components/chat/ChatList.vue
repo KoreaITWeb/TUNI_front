@@ -73,7 +73,7 @@
         <!-- 이름 + 메시지 -->
         <div class="flex-grow-1">
           <div class="fw-bold">{{ getOtherUserName(room) }}</div>
-          <small class="text-muted">게시글 #{{ room.boardId }}</small>
+          <!-- <small class="text-muted">게시글 #{{ room.boardId }}</small> -->
           <div v-if="room.lastMessage" class="text-muted small text-truncate">
             {{ room.lastMessage }}
           </div>

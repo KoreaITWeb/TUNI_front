@@ -91,14 +91,46 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, computed ,watch, nextTick } from 'vue'
 
 const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected'])
 
 const message = ref('')
 const chatArea = ref(null)
 
-const emit = defineEmits(['sendMessage', 'quitRoom'])
+
+
+const emit = defineEmits(['sendMessage', 'quitRoom','lastMessageUpdate'])
+
+// ✅ 새로 추가: 마지막 메시지 추출
+const lastMessage = computed(() => {
+  if (!props.messages || props.messages.length === 0) return null
+  return props.messages[props.messages.length - 1]
+})
+
+// ✅ 새로 추가: 마지막 메시지 변경 시 부모에게 전달
+watch(lastMessage, (newLastMessage) => {
+  if (newLastMessage && props.room) {
+    emit('lastMessageUpdate', {
+      chatId: props.room.chatId,
+      lastMessage: newLastMessage.content,
+      lastMessageTime: newLastMessage.regdate,
+      lastMessageUserId: newLastMessage.userId
+    })
+  }
+}, { immediate: true, deep: true })
+
+// ✅ 새로 추가: 채팅방 변경 시에도 마지막 메시지 전달
+watch(() => props.room, (newRoom) => {
+  if (newRoom && lastMessage.value) {
+    emit('lastMessageUpdate', {
+      chatId: newRoom.chatId,
+      lastMessage: lastMessage.value.content,
+      lastMessageTime: lastMessage.value.regdate,
+      lastMessageUserId: lastMessage.value.userId
+    })
+  }
+}, { immediate: true })
 
 const handleQuitRoom = () => {
   if (confirm(`정말로 "${getOtherUserName()}"님과의 채팅방을 나가시겠습니까?\n\n나간 후에는 대화 내역을 볼 수 없습니다.`)) {

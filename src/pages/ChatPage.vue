@@ -4,7 +4,7 @@
       <!-- 왼쪽: 채팅 목록 -->
       <div class="col-md-4 border-end overflow-auto">
         <ChatList 
-          :chatRooms="chatRooms" 
+          :chatRooms="enhancedChatRooms" 
           :currentUserId="currentUserId"
           :isConnected="isConnected"
           @selectRoom="selectRoom" 
@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import ChatList from '@/components/chat/ChatList.vue'
 import ChatDetail from '@/components/chat/ChatDetail.vue'
@@ -45,6 +45,10 @@ const chatRooms = ref([]);
 const selectedRoom = ref(null);
 const messages = ref([]);
 
+// 각 채팅방의 마지막 메시지 저장
+const lastMessages = ref(new Map()); // chatId -> { content, regdate, userId }
+
+
 let stompClient = null;
 const isConnected = ref(false);
 let currentChatSubscription = null;
@@ -55,6 +59,94 @@ import { storeToRefs } from 'pinia';
 
 const authStore = useAuthStore();
 const { userId: loggedInUserId } = storeToRefs(authStore);
+
+// ✅ 새로 추가: ChatDetail에서 전달받은 마지막 메시지 처리
+const handleLastMessageUpdate = (messageInfo) => {
+  console.log('🔍 ChatPages - 이벤트 수신:', messageInfo);
+  
+  lastMessages.value.set(messageInfo.chatId, {
+    content: messageInfo.lastMessage,
+    regdate: messageInfo.lastMessageTime,
+    userId: messageInfo.lastMessageUserId
+  });
+  
+  console.log('🔍 ChatPages - lastMessages Map:', lastMessages.value);
+  
+  // Vue 반응성 트리거를 위해 새로운 Map 생성
+  lastMessages.value = new Map(lastMessages.value);
+}
+
+// lastMessage 정보가 포함된 채팅방 목록 계산
+const enhancedChatRooms = computed(() => {
+  return chatRooms.value.map(room => {
+    const lastMsg = lastMessages.value.get(room.chatId);
+    return {
+      ...room,
+      lastMessage: lastMsg?.content || null,
+      lastMessageTime: lastMsg?.regdate || room.updatedAt,
+      lastMessageUserId: lastMsg?.userId || null,
+      unreadCount: room.unreadCount || 0
+    };
+  }).sort((a, b) => {
+    // 최신 메시지 시간 순으로 정렬
+    const timeA = new Date(a.lastMessageTime || 0);
+    const timeB = new Date(b.lastMessageTime || 0);
+    return timeB - timeA;
+  });
+});
+
+// ✅ 새로 추가: 모든 채팅방의 마지막 메시지 로드 함수 (성능 최적화)
+const loadAllLastMessages = async () => {
+  console.log('🔍 모든 채팅방의 마지막 메시지 로드 시작 (선택하지 않아도 표시)');
+  
+  // 성능 최적화: 병렬로 모든 채팅방의 마지막 메시지 로드
+  const promises = chatRooms.value.map(async (room) => {
+    try {
+      const res = await axios.get(`${API_BASE}/messages`, {
+        params: { chatId: room.chatId },
+      });
+      const roomMessages = res.data || [];
+      
+      if (roomMessages.length > 0) {
+        const lastMsg = roomMessages[roomMessages.length - 1]; // 마지막 메시지
+        console.log(`🔍 Room ${room.chatId} (${getOtherUserNameForRoom(room)}) 마지막 메시지:`, lastMsg.content);
+        
+        return {
+          chatId: room.chatId,
+          lastMessage: {
+            content: lastMsg.content,
+            regdate: lastMsg.regdate,
+            userId: lastMsg.userId
+          }
+        };
+      }
+      return { chatId: room.chatId, lastMessage: null };
+    } catch (error) {
+      console.error(`채팅방 ${room.chatId} 마지막 메시지 로드 실패:`, error);
+      return { chatId: room.chatId, lastMessage: null };
+    }
+  });
+  
+  // 모든 요청이 완료될 때까지 대기
+  const results = await Promise.all(promises);
+  
+  // 결과를 lastMessages Map에 저장
+  results.forEach(({ chatId, lastMessage }) => {
+    if (lastMessage) {
+      lastMessages.value.set(chatId, lastMessage);
+    }
+  });
+  
+  console.log('🔍 모든 마지막 메시지 로드 완료 (총 ' + results.filter(r => r.lastMessage).length + '개):', lastMessages.value);
+  
+  // Vue 반응성 트리거 - ChatList에서 즉시 표시됨
+  lastMessages.value = new Map(lastMessages.value);
+};
+
+// ✅ 새로 추가: 채팅방의 상대방 이름 가져오기 헬퍼 함수
+const getOtherUserNameForRoom = (room) => {
+  return room.buyerId === currentUserId.value ? room.sellerId : room.buyerId;
+};
 
 // WebSocket 연결 및 구독
 const connectWebSocket = () => {
@@ -144,6 +236,13 @@ const subscribeToChatRoom = (chatId) => {
       
       // 강제로 Vue 반응성 트리거
       messages.value = [...messages.value];
+
+      //  WebSocket으로 받은 메시지도 lastMessages에 업데이트
+      lastMessages.value.set(message.chatId, {
+        content: message.content,
+        regdate: message.regdate,
+        userId: message.userId
+      });
       
       console.log('현재 메시지 목록:', messages.value);
       
@@ -167,10 +266,17 @@ const loadChatRoomsByUser = async (userId) => {
       params: { userId: userId },
     });
     chatRooms.value = res.data || [];
+
+    
+
     console.log('채팅방 목록 로드 완료:', chatRooms.value);
+
+    // ✅ 새로 추가: 모든 채팅방의 마지막 메시지 로드 (채팅방 선택 전에 미리 로드)
+    await loadAllLastMessages();
     
     // 채팅방 목록 로드 후 URL 쿼리에 따른 자동 선택 실행
     await handleAutoSelectRoom();
+    
     
   } catch (e) {
     console.error("채팅방 목록 불러오기 실패", e);
@@ -275,7 +381,25 @@ const selectRoom = async (room) => {
       params: { chatId: room.chatId },
     });
     messages.value = res.data || [];
+    console.log(messages.value[messages.value.length - 1]);
     console.log('채팅방 메시지 로드 완료:', messages.value.length, '개');
+
+// 메시지 로드 후 마지막 메시지 정보 업데이트
+    if (messages.value.length > 0) {
+      const lastMsg = messages.value[messages.value.length - 1];
+      lastMessages.value.set(room.chatId, {
+        content: lastMsg.content,
+        regdate: lastMsg.regdate,
+        userId: lastMsg.userId
+      });
+    }
+    
+    // 채팅방 선택 시 읽지 않은 메시지 수 초기화
+    const roomIndex = chatRooms.value.findIndex(r => r.chatId === room.chatId);
+    if (roomIndex !== -1) {
+      chatRooms.value[roomIndex].unreadCount = 0;
+    }
+
   } catch (e) {
     console.error("메시지 불러오기 실패", e);
   }
@@ -331,6 +455,13 @@ const sendMessage = (messageData) => {
     isOptimistic: true // 임시 표시용 플래그
   });
 
+  // 내가 보낸 메시지도 lastMessages에 즉시 반영
+  lastMessages.value.set(selectedRoom.value.chatId, {
+    content: msg.content,
+    regdate: msg.regdate,
+    userId: msg.userId
+  });
+
   // 서버로 메시지 전송
   stompClient.send("/app/chat/send", {}, JSON.stringify(msg));
 };
@@ -361,6 +492,9 @@ const quitChatRoom = async () => {
     // 즉시 UI 업데이트 (Optimistic Update)
     chatRooms.value = chatRooms.value.filter(room => room.chatId !== selectedRoom.value.chatId);
     
+// ✅ 새로 추가: 나간 채팅방의 마지막 메시지 정보도 제거
+    lastMessages.value.delete(selectedRoom.value.chatId);
+
     // 현재 선택된 채팅방 초기화
     if (currentChatSubscription) {
       currentChatSubscription.unsubscribe();
@@ -397,6 +531,9 @@ const handleRoomQuitUpdate = (quitInfo) => {
     // 채팅방 목록에서 해당 채팅방 제거
     chatRooms.value = chatRooms.value.filter(room => room.chatId !== quitInfo.chatId);
     
+// ✅ 새로 추가: 나간 채팅방의 마지막 메시지 정보도 제거
+    lastMessages.value.delete(quitInfo.chatId);
+
     // 현재 선택된 채팅방이 나간 방이면 초기화
     if (selectedRoom.value && selectedRoom.value.chatId === quitInfo.chatId) {
       if (currentChatSubscription) {

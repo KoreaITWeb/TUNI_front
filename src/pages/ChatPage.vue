@@ -30,6 +30,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import ChatList from '@/components/chat/ChatList.vue'
 import ChatDetail from '@/components/chat/ChatDetail.vue'
 import SockJS from "sockjs-client";
@@ -37,6 +38,7 @@ import { Stomp } from "@stomp/stompjs";
 import axios from "axios";
 
 const API_BASE = "http://localhost:8443/api/chat";
+const route = useRoute();
 
 const currentUserId = ref('');
 const chatRooms = ref([]);
@@ -47,20 +49,12 @@ let stompClient = null;
 const isConnected = ref(false);
 let currentChatSubscription = null;
 
-// 로그인된 사용자 정보 가져오기 (예시 - 실제로는 auth store에서)
+// 로그인된 사용자 정보 가져오기
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
 
 const authStore = useAuthStore();
 const { userId: loggedInUserId } = storeToRefs(authStore);
-
-// 컴포넌트 마운트 시 로그인된 사용자 ID 설정
-onMounted(() => {
-  if (loggedInUserId.value) {
-    currentUserId.value = loggedInUserId.value;
-  }
-  connectWebSocket();
-});
 
 // WebSocket 연결 및 구독
 const connectWebSocket = () => {
@@ -91,6 +85,9 @@ const connectWebSocket = () => {
             const existingRoom = chatRooms.value.find(room => room.chatId === roomUpdate.chatId);
             if (!existingRoom) {
               chatRooms.value.push(roomUpdate);
+              
+              // 새로 생성된 채팅방이 현재 찾고 있는 게시글의 채팅방인지 확인
+              checkAndSelectNewRoom(roomUpdate);
             }
           }
         }
@@ -107,6 +104,17 @@ const connectWebSocket = () => {
       }, 5000);
     }
   );
+};
+
+// 새로 생성된 채팅방 확인 및 자동 선택
+const checkAndSelectNewRoom = async (newRoom) => {
+  const { boardId } = route.query;
+  
+  // URL에 boardId가 있고, 새로 생성된 채팅방이 해당 게시글의 채팅방이면 자동 선택
+  if (boardId && parseInt(newRoom.boardId) === parseInt(boardId) && !selectedRoom.value) {
+    console.log('새로 생성된 채팅방 자동 선택:', newRoom);
+    await selectRoom(newRoom);
+  }
 };
 
 // 특정 채팅방 구독
@@ -143,8 +151,55 @@ const loadChatRoomsByUser = async (userId) => {
       params: { userId: userId },
     });
     chatRooms.value = res.data || [];
+    console.log('채팅방 목록 로드 완료:', chatRooms.value);
+    
+    // 채팅방 목록 로드 후 URL 쿼리에 따른 자동 선택 실행
+    await handleAutoSelectRoom();
+    
   } catch (e) {
     console.error("채팅방 목록 불러오기 실패", e);
+  }
+};
+
+// URL 쿼리에 따른 자동 채팅방 선택
+const handleAutoSelectRoom = async () => {
+  const { roomId, boardId, newBoardId } = route.query;
+  
+  if (roomId) {
+    // 1. roomId가 있으면 해당 채팅방 직접 선택
+    const targetRoom = chatRooms.value.find(room => room.chatId === parseInt(roomId));
+    if (targetRoom) {
+      console.log('URL roomId로 채팅방 자동 선택:', targetRoom);
+      await selectRoom(targetRoom);
+      return;
+    }
+  }
+  
+  if (newBoardId) {
+    // 2. newBoardId가 있으면 해당 게시글의 채팅방 선택 (기존 채팅방에서 새 게시글로)
+    const targetRoom = chatRooms.value.find(room => 
+      parseInt(room.boardId) === parseInt(newBoardId)
+    );
+    if (targetRoom) {
+      console.log('URL newBoardId로 채팅방 자동 선택:', targetRoom);
+      await selectRoom(targetRoom);
+      return;
+    }
+  }
+  
+  if (boardId) {
+    // 3. boardId가 있으면 해당 게시글의 채팅방 찾기 (새 채팅방 생성용)
+    const targetRoom = chatRooms.value.find(room => 
+      parseInt(room.boardId) === parseInt(boardId)
+    );
+    if (targetRoom) {
+      console.log('URL boardId로 채팅방 자동 선택:', targetRoom);
+      await selectRoom(targetRoom);
+      return;
+    } else {
+      console.log('boardId에 해당하는 채팅방을 찾을 수 없음. 채팅방 생성 대기 중...');
+      // 새 채팅방이 생성될 때까지 대기 (checkAndSelectNewRoom에서 처리)
+    }
   }
 };
 
@@ -169,6 +224,7 @@ const selectRoom = async (room) => {
       params: { chatId: room.chatId },
     });
     messages.value = res.data || [];
+    console.log('채팅방 메시지 로드 완료:', messages.value.length, '개');
   } catch (e) {
     console.error("메시지 불러오기 실패", e);
   }
@@ -277,8 +333,26 @@ const handleRoomQuitUpdate = (quitInfo) => {
   }
 };
 
-onMounted(() => {
+// 컴포넌트 마운트 시 초기화
+onMounted(async () => {
+  // 로그인된 사용자 ID 설정
+  if (loggedInUserId.value) {
+    currentUserId.value = loggedInUserId.value;
+  }
+  
+  // URL 쿼리에서 사용자 ID 확인 (ProductDetail에서 전달된 경우)
+  const { userId } = route.query;
+  if (userId) {
+    currentUserId.value = userId;
+  }
+  
+  // WebSocket 연결
   connectWebSocket();
+  
+  // 사용자 ID가 있으면 채팅방 목록 자동 로드
+  if (currentUserId.value) {
+    await loadChatRoomsByUser(currentUserId.value);
+  }
 });
 
 onUnmounted(() => {

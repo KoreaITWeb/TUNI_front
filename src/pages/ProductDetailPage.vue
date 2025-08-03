@@ -223,7 +223,7 @@ const startChat = async () => {
           roomId: sameProductRoom.chatId,
           userId: loggedInUserId.value 
         }
-      });
+      }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
     } else if (samePairRoom) {
       // 같은 seller-buyer 조합의 다른 게시글 채팅방이 있으면 해당 채팅방으로 이동
       console.log('동일 사용자 조합 채팅방 발견 (다른 게시글):', samePairRoom);
@@ -237,7 +237,7 @@ const startChat = async () => {
           userId: loggedInUserId.value,
           newBoardId: parseInt(productId.value) // 새로운 게시글 ID 정보 전달
         }
-      });
+      }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
     } else {
       // 새 채팅방 생성 요청
       console.log('새 채팅방 생성 요청:', chatRoomData);
@@ -251,7 +251,7 @@ const startChat = async () => {
             userId: loggedInUserId.value,
             boardId: parseInt(productId.value)
           }
-        });
+        }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
       }, 1000);
     }
 

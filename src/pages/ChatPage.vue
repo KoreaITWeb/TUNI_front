@@ -130,10 +130,26 @@ const subscribeToChatRoom = (chatId) => {
     currentChatSubscription = null;
   }
 
+  console.log(`채팅방 ${chatId} 구독 시작`);
+
   // 새 채팅방 구독
   currentChatSubscription = stompClient.subscribe(`/topic/chat/${chatId}`, (msg) => {
-    const message = JSON.parse(msg.body);
-    messages.value.push(message);
+    console.log('새 메시지 수신:', msg.body);
+    try {
+      const message = JSON.parse(msg.body);
+      console.log('파싱된 메시지:', message);
+      
+      // 메시지 추가 및 화면 업데이트
+      messages.value.push(message);
+      
+      // 강제로 Vue 반응성 트리거
+      messages.value = [...messages.value];
+      
+      console.log('현재 메시지 목록:', messages.value);
+      
+    } catch (error) {
+      console.error('메시지 파싱 실패:', error);
+    }
   });
 };
 
@@ -165,12 +181,30 @@ const loadChatRoomsByUser = async (userId) => {
 const handleAutoSelectRoom = async () => {
   const { roomId, boardId, newBoardId } = route.query;
   
+  console.log('자동 채팅방 선택 시작, 쿼리:', { roomId, boardId, newBoardId });
+  console.log('WebSocket 연결 상태:', isConnected.value);
+  
+  // WebSocket 연결이 안 되어 있으면 잠시 대기
+  if (!isConnected.value) {
+    console.log('WebSocket 연결 대기 중...');
+    setTimeout(handleAutoSelectRoom, 500);
+    return;
+  }
+  
   if (roomId) {
     // 1. roomId가 있으면 해당 채팅방 직접 선택
     const targetRoom = chatRooms.value.find(room => room.chatId === parseInt(roomId));
     if (targetRoom) {
       console.log('URL roomId로 채팅방 자동 선택:', targetRoom);
       await selectRoom(targetRoom);
+      
+      // 추가로 구독 상태 확인 및 재구독
+      setTimeout(() => {
+        if (!currentChatSubscription && isConnected.value) {
+          console.log('구독이 안되어 있어서 재구독 시도');
+          // subscribeToChatRoom(targetRoom.chatId);
+        }
+      }, 1000);
       return;
     }
   }
@@ -183,6 +217,14 @@ const handleAutoSelectRoom = async () => {
     if (targetRoom) {
       console.log('URL newBoardId로 채팅방 자동 선택:', targetRoom);
       await selectRoom(targetRoom);
+      
+      // 추가로 구독 상태 확인 및 재구독
+      setTimeout(() => {
+        if (!currentChatSubscription && isConnected.value) {
+          console.log('구독이 안되어 있어서 재구독 시도');
+          // subscribeToChatRoom(targetRoom.chatId);
+        }
+      }, 1000);
       return;
     }
   }
@@ -195,6 +237,14 @@ const handleAutoSelectRoom = async () => {
     if (targetRoom) {
       console.log('URL boardId로 채팅방 자동 선택:', targetRoom);
       await selectRoom(targetRoom);
+      
+      // 추가로 구독 상태 확인 및 재구독
+      setTimeout(() => {
+        if (!currentChatSubscription && isConnected.value) {
+          console.log('구독이 안되어 있어서 재구독 시도');
+          // subscribeToChatRoom(targetRoom.chatId);
+        }
+      }, 1000);
       return;
     } else {
       console.log('boardId에 해당하는 채팅방을 찾을 수 없음. 채팅방 생성 대기 중...');
@@ -215,6 +265,7 @@ const createChatRoom = (roomData) => {
 
 // 채팅방 선택
 const selectRoom = async (room) => {
+  console.log('채팅방 선택:', room);
   selectedRoom.value = room;
   messages.value = [];
 
@@ -229,9 +280,28 @@ const selectRoom = async (room) => {
     console.error("메시지 불러오기 실패", e);
   }
 
-  // 채팅방 구독
+  // 채팅방 구독 (WebSocket 연결 확인 후)
   if (isConnected.value) {
-    subscribeToChatRoom(room.chatId);
+    console.log('즉시 구독 시도');
+    // subscribeToChatRoom(room.chatId);
+  } else {
+    console.log('WebSocket 연결 대기 중, 연결 후 구독 예정');
+    // WebSocket 연결 대기 후 구독
+    const checkConnection = setInterval(() => {
+      if (isConnected.value) {
+        console.log('WebSocket 연결됨, 이제 구독 시도');
+        subscribeToChatRoom(room.chatId);
+        clearInterval(checkConnection);
+      }
+    }, 100);
+    
+    // 5초 후에도 연결 안 되면 타임아웃
+    setTimeout(() => {
+      clearInterval(checkConnection);
+      if (!isConnected.value) {
+        console.error('WebSocket 연결 타임아웃');
+      }
+    }, 5000);
   }
 };
 
@@ -242,12 +312,26 @@ const sendMessage = (messageData) => {
     return;
   }
 
+  if (!selectedRoom.value) {
+    alert("채팅방을 선택해주세요.");
+    return;
+  }
+
   const msg = {
     ...messageData,
     userId: currentUserId.value,
     regdate: new Date().toISOString(),
   };
 
+  console.log('메시지 전송:', msg);
+
+  // Optimistic Update - 내 메시지는 즉시 화면에 표시
+  messages.value.push({
+    ...msg,
+    isOptimistic: true // 임시 표시용 플래그
+  });
+
+  // 서버로 메시지 전송
   stompClient.send("/app/chat/send", {}, JSON.stringify(msg));
 };
 

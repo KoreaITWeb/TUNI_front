@@ -7,20 +7,20 @@
         <small class="text-muted">게시글 #{{ props.room.boardId }}</small>
       </div>
       <button 
-  class="btn btn-outline-danger btn-sm" 
-  type="button"
-  @click="handleQuitRoom"
-  title="채팅방 나가기"
->
-  <i class="bi bi-box-arrow-left me-2"></i>채팅방 나가기
-</button>
+        class="btn btn-outline-danger btn-sm" 
+        type="button"
+        @click="handleQuitRoom"
+        title="채팅방 나가기"
+      >
+        <i class="bi bi-box-arrow-left me-2"></i>채팅방 나가기
+      </button>
     </div>
 
-    <!-- 채팅 내용 (위로 고정) -->
+    <!-- 채팅 내용 (스크롤 영역) -->
     <div 
       ref="chatArea" 
-      class="flex-grow-1 overflow-auto p-3 bg-light" 
-      style="display: flex; flex-direction: column; min-height: 400px;"
+      class="flex-grow-1 overflow-auto p-3 bg-light chat-scroll-area" 
+      style="display: flex; flex-direction: column; min-height: 400px; max-height: 500px;"
     >
       <div v-if="props.messages.length === 0" class="text-center text-muted mt-5">
         아직 메시지가 없습니다. 첫 메시지를 보내보세요!
@@ -152,6 +152,37 @@ watch(() => props.room, () => {
 <style scoped>
 .bg-light {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+}
+
+/* 채팅 스크롤 영역 개선 */
+.chat-scroll-area {
+  /* 스크롤바 스타일링 */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 부드러운 스크롤 */
+.chat-scroll-area {
+  scroll-behavior: smooth;
 }
 
 .dropdown-menu {

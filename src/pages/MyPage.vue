@@ -174,13 +174,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed  } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { 
   Check, Star, Plus, Edit, Heart, 
   Package, MessageSquare, ShoppingCart 
 } from 'lucide-vue-next'
 import '@/assets/styles/pages/Mypage.css'
-import api from '@/api';
+import api from '@/api'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
@@ -196,11 +196,61 @@ const user = reactive({
   grade: '3',
   profileImage: placeholder,
   rating: 4.8,
-  transactionCount: 23
+  transactionCount: 23,
+  schoolname: ''
 })
 
+const stats = reactive({
+  selling: 0,
+  sold: 18,
+  purchased: 12,
+  wishlist: 0
+})
+
+// 찜한 상품 목록과 stats.wishlist 업데이트 함수
+async function loadWishlist(userId) {
+  try {
+    const resLikes = await axios.get(`/api/mypage/${userId}/likes`)
+    wishlistItems.value = resLikes.data.map(item => ({
+      id: item.boardId,
+      title: item.title,
+      price: item.price,
+      image: item.thumbnailUrl || '/placeholder.svg?height=128&width=128'
+    }))
+    stats.wishlist = wishlistItems.value.length
+  } catch (err) {
+    console.error('찜한 게시글 목록 로딩 실패:', err)
+  }
+}
+
+// 내가 등록한 상품 및 user 정보, stats.selling 업데이트 함수
+async function loadMyPageData(userId) {
+  try {
+    const res = await api.get(`/api/mypage/${userId}`)
+    console.log('API 응답 데이터:', res.data)
+    console.log('내 상품 목록:', res.data.productList)
+    myProducts.value = res.data.productList || []
+    console.log('상품 리스트 길이:', (res.data.productList || []).length)
+    myProducts.value.forEach((p, i) => {
+      console.log(`상품[${i}]`, p)
+    })
+    user.name = res.data.user.userId
+    user.schoolname = res.data.university.name
+    
+    console.log('첫 번째 상품 상세:', res.data.productList[0])
+    stats.selling = myProducts.value.length
+
+    console.log('판매중 상품 개수:', stats.selling)
+    console.log('상품 목록:', myProducts.value)
+    console.log('업데이트된 user 객체:', user)
+  } catch (err) {
+    console.error('내가 등록한 상품 데이터 로딩 실패:', err)
+  }
+}
+
+// 컴포넌트 마운트 시 찜한 상품과 내가 등록한 상품 모두 불러오기
 onMounted(async () => {
-  const userId = authStore.userId  // ✅ store에서 가져옴
+  const userId = authStore.userId
   const schoolId = authStore.schoolId
   console.log("현재 저장된 userId: ", userId)
   console.log("현재 저장된 schoolId: ", schoolId)
@@ -209,45 +259,26 @@ onMounted(async () => {
     console.error('사용자 ID 또는 학교 ID가 없습니다.')
     return
   }
-
-  try {
-    // ② 찜한 게시글 목록 API 호출
-    const resLikes = await axios.get(`/api/mypage/${userId}/likes`)
-    // API 응답을 wishlistItems에 넣기 (필요에 따라 프로퍼티 맞춤)
-    wishlistItems.value = resLikes.data.map(item => ({
-      id: item.boardId,
-      title: item.title,
-      price: item.price,
-      image: item.thumbnailUrl || '/placeholder.svg?height=128&width=128'
-    }))
-
-    const res = await api.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
-    console.log('API 응답 데이터:', res.data)
-    console.log('내 상품 목록:', res.data.productList)
-    // Object.assign(user, res.data)
-    //user.name = res.data.userId
-    //user.schoolname = res.data.schoolId
-    myProducts.value = res.data.productList || []
-    user.name = res.data.user.userId; // 또는 user.name이 이미 있을 수 있음
-    user.schoolname = res.data.university.name;
   
-    console.log('업데이트된 user 객체:', user)
-    
-  } catch (err) {
-    console.error('사용자 정보 로딩 실패:', err)
-  }
+  await loadWishlist(userId)
+  await loadMyPageData(userId)
 })
 
-const stats = reactive({
-  selling: 5,
-  sold: 18,
-  purchased: 12,
-  wishlist: 8
+// activeMenu가 'myItems'로 변경될 때마다 내가 등록한 상품 목록 새로 불러오기
+watch(activeMenu, async (newVal) => {
+  if (newVal === 'myItems') {
+    const userId = authStore.userId
+    if (!userId) {
+      console.error('userId가 없습니다.')
+      return
+    }
+    await loadMyPageData(userId)
+  }
 })
 
 const menuItems = computed(() => [
   { id: 'wishlist', title: '찜한목록', count: `${wishlistItems.value.length}개`, icon: Heart },
-  { id: 'myItems', title: '내가 등록한 상품', count: '23개', icon: Package },
+  { id: 'myItems', title: '내가 등록한 상품', count: `${myProducts.value.length}개`, icon: Package },
   { id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
   { id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
 ])
@@ -286,7 +317,6 @@ const recentMessages = [
   }
 ]
 
-
 const getStatusClass = (status) => {
   switch (status) {
     case '판매중':
@@ -300,4 +330,5 @@ const getStatusClass = (status) => {
   }
 }
 </script>
+
 

@@ -174,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed  } from 'vue'
 import { 
   Check, Star, Plus, Edit, Heart, 
   Package, MessageSquare, ShoppingCart 
@@ -245,12 +245,12 @@ const stats = reactive({
   wishlist: 8
 })
 
-const menuItems = [
-  { id: 'wishlist', title: '찜한목록', count: '8개', icon: Heart },
+const menuItems = computed(() => [
+  { id: 'wishlist', title: '찜한목록', count: `${wishlistItems.value.length}개`, icon: Heart },
   { id: 'myItems', title: '내가 등록한 상품', count: '23개', icon: Package },
   { id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
   { id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
-]
+])
 
 const recentItems = [
   {

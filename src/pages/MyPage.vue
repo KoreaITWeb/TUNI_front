@@ -118,7 +118,10 @@
       <div class="content-area">
         <div v-if="activeMenu === 'wishlist'" class="content-section">
           <h3 class="content-title">찜한 목록</h3>
-          <div class="wishlist-grid">
+          <div v-if="wishlistItems.length === 0" class="empty-message">
+            찜한 상품이 없습니다.
+          </div>
+          <div v-else class="wishlist-grid">
             <div v-for="item in wishlistItems" :key="item.id" class="wishlist-item">
               <img :src="item.image" :alt="item.title" class="wishlist-image">
               <h4 class="wishlist-title">{{ item.title }}</h4>
@@ -178,11 +181,13 @@ import {
 } from 'lucide-vue-next'
 import '@/assets/styles/pages/Mypage.css'
 import api from '@/api';
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const activeMenu = ref('wishlist')
 const myProducts = ref([])
+const wishlistItems = ref([])
 const placeholder = '/placeholder.svg'
 
 const user = reactive({
@@ -206,6 +211,16 @@ onMounted(async () => {
   }
 
   try {
+    // ② 찜한 게시글 목록 API 호출
+    const resLikes = await axios.get(`/api/mypage/${userId}/likes`)
+    // API 응답을 wishlistItems에 넣기 (필요에 따라 프로퍼티 맞춤)
+    wishlistItems.value = resLikes.data.map(item => ({
+      id: item.boardId,
+      title: item.title,
+      price: item.price,
+      image: item.thumbnailUrl || '/placeholder.svg?height=128&width=128'
+    }))
+
     const res = await api.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
     console.log('API 응답 데이터:', res.data)
     console.log('내 상품 목록:', res.data.productList)
@@ -271,26 +286,6 @@ const recentMessages = [
   }
 ]
 
-const wishlistItems = [
-  {
-    id: 1,
-    title: '갤럭시 탭 S8',
-    price: 450000,
-    image: placeholder
-  },
-  {
-    id: 2,
-    title: '에어팟 프로',
-    price: 180000,
-    image: placeholder
-  },
-  {
-    id: 3,
-    title: '닌텐도 스위치',
-    price: 280000,
-    image: placeholder
-  }
-]
 
 const getStatusClass = (status) => {
   switch (status) {

@@ -36,7 +36,7 @@ import ChatDetail from '@/components/chat/ChatDetail.vue'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
-import axios from "axios"
+import api from '@/api'
 
 const API_BASE = "http://localhost:8443/api/chat"
 const route = useRoute()
@@ -51,7 +51,7 @@ const selectedRoom = ref(null)
 const messages = ref([])
 let currentChatSubscription = null
 
-// Store의 chatRooms 변경 감지하여 강제 업데이트
+// // Store의 chatRooms 변경 감지하여 강제 업데이트
 watch(
   () => chatStore.chatRooms,
   (newRooms) => {
@@ -86,8 +86,7 @@ const enhancedChatRooms = computed(() => {
       lastMessageUserId: lastMsg?.userId || null,
       unreadCount: room.unreadCount || 0
     }
-    console.log(`enhanced room ${room.chatId}:`, enhanced)
-    return enhanced
+
   }).sort((a, b) => {
     // 최신 메시지 시간 순으로 정렬
     const timeA = new Date(a.lastMessageTime || 0)
@@ -227,7 +226,7 @@ const selectRoom = async (room) => {
 
   try {
     // 기존 메시지 로드
-    const res = await axios.post(`${API_BASE}/messages`, {
+    const res = await api.post(`${API_BASE}/messages`, {
       chatId: room.chatId
     })
     messages.value = res.data || []

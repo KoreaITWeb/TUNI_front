@@ -3,7 +3,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import SockJS from "sockjs-client"
 import { Stomp } from "@stomp/stompjs"
-import axios from "axios"
+import api from '@/api'
+import axios from 'axios'
 
 export const useChatStore = defineStore('chat', () => {
   // 상태
@@ -18,7 +19,7 @@ export const useChatStore = defineStore('chat', () => {
   let globalUserSubscription = null
   let roomsSubscription = null
   
-  const API_BASE = "http://localhost:8443/api/chat"
+  const API_BASE = "/api/chat"
 
   // Computed - 총 읽지 않은 메시지 수
   const unreadMessagesCount = computed(() => {
@@ -286,7 +287,7 @@ const loadChatRooms = async (userId) => {
     
     console.log('🔍 기존 unreadCount 저장:', existingUnreadCounts)
     
-    const res = await axios.post(`${API_BASE}/rooms`, {
+    const res = await api.post(`${API_BASE}/rooms`, {
       userId: userId
     })
     
@@ -316,7 +317,7 @@ const loadChatRooms = async (userId) => {
     
     const promises = chatRooms.value.map(async (room) => {
       try {
-        const res = await axios.post(`${API_BASE}/messages`, {
+        const res = await api.post(`${API_BASE}/messages`, {
           chatId: room.chatId
         })
         const roomMessages = res.data || []
@@ -365,7 +366,7 @@ const loadChatRooms = async (userId) => {
         
         // 새 채팅방의 마지막 메시지도 즉시 로드
         try {
-          const res = await axios.post(`${API_BASE}/messages`, {
+          const res = await api.post(`${API_BASE}/messages`, {
             chatId: roomUpdate.chatId
           })
           const roomMessages = res.data || []

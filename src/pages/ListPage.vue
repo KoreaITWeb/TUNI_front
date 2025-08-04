@@ -77,7 +77,7 @@
 
 <script setup>
 import '@/assets/styles/pages/ListPage.css';
-import axios from 'axios';
+import api from '@/api';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth'
@@ -114,11 +114,12 @@ async function fetchProducts() {
     
     // schoolId = parseInt(schoolIdString, 10);
 
-    const formData = new FormData();
-    formData.append('userId', currentUserId);
-    formData.append('schoolId', currentSchoolId);
+    const requestData = {
+      userId: currentUserId,
+      schoolId: currentSchoolId
+    };
 
-    const response = await axios.post('/board/list', formData);
+    const response = await api.post('/board/list', requestData);
     
     if (response.data.success) {
       products.value = response.data.list;

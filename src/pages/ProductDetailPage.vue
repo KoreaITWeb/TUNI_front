@@ -104,9 +104,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
+import api from '@/api';
 
 const route = useRoute();
 const router = useRouter()
@@ -129,11 +129,6 @@ const { userId: loggedInUserId } = storeToRefs(authStore);
 // 현재 사용자가 판매자인지 확인하는 computed 속성
 const isOwner = computed(() => {
   // seller 정보와 로그인한 사용자 ID가 모두 존재하고, 두 ID가 일치하는지 확인
-  console.log(seller.value);
-  console.log(loggedInUserId.value);
-  console.log('판매자 ID 타입:', typeof seller.value);       // "number"
-  console.log('로그인 ID 타입:', typeof loggedInUserId.value);
-  console.log(String(seller.value) == String(loggedInUserId.value));
   return seller.value && loggedInUserId.value && String(seller.value) === String(loggedInUserId.value);
 });
 
@@ -149,7 +144,7 @@ async function deleteProduct() {
   if (confirm('정말로 이 상품을 삭제하시겠습니까?')) {
     try {
       // 백엔드에 DELETE 요청 보내기 (API 경로는 예시입니다)
-      await axios.delete(`/board/${productId.value}`,
+      await api.delete(`/board/${productId.value}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('accessToken')}`
@@ -174,7 +169,7 @@ function changeMainImage(imageUrl) {
 async function fetchProductDetails(id) {
   try {
     try {
-        await axios.post(`/views/tracking`, {
+        await api.post(`/views/tracking`, {
           userId: loggedInUserId.value,
           boardId: productId.value
         });
@@ -182,7 +177,7 @@ async function fetchProductDetails(id) {
         console.warn('조회수 추적 실패:', viewError);
         // 조회수 추적 실패해도 상품 정보는 계속 로드
       }
-    const response = await axios.get(`/board/${id}`, {
+    const response = await api.get(`/board/${id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('accessToken')}`
       }
@@ -218,7 +213,7 @@ async function updateStatus() {
   try {
     const newStatus = product.value.saleStatus;
     // JWT 토큰을 헤더에 담아 PATCH 요청 전송
-    await axios.patch(`/board/${productId.value}/status`, 
+    await api.patch(`/board/${productId.value}/status`, 
       { saleStatus: newStatus },
       {
         headers: {
@@ -243,7 +238,7 @@ async function toggleLike() {
 
   try {
     // 백엔드에 좋아요/취소 요청
-    await axios.post(`/board/${productId.value}/like`, {}, {
+    await api.post(`/board/${productId.value}/like`, {}, {
       headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
     });
   } catch (err) {

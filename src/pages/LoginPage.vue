@@ -84,7 +84,7 @@ async function onButtonClick() {
   if (!showCodeInput.value) {
     // 코드 전송
     try {
-      console.log(universityId.value);
+      // console.log(universityId.value);
       const response = await axios.post('/api/auth/code/send', {
         email: email.value,
         universityId: universityId.value,

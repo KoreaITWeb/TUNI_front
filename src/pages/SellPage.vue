@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import axios from 'axios'
+import api from '@/api';
 import { ref, onMounted, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
@@ -121,7 +121,7 @@ watch(() => route.params.id, (newId, oldId) => {
 async function fetchProductForEdit() {
   if (!isEditMode.value) return;
   try {
-    const response = await axios.get(`/board/${productId.value}`);
+    const response = await api.get(`/board/${productId.value}`);
     const product = response.data.board;
     
     // 폼 상태를 불러온 데이터로 채움
@@ -169,7 +169,7 @@ async function submitItem() {
   if (isEditMode.value) {
     // --- 수정 로직 ---
     try {
-      await axios.post('/board/update', {
+      await api.post('/board/update', {
         boardId: productId.value,
         title: title.value,
         price: price.value,
@@ -195,7 +195,7 @@ async function submitItem() {
     }
 
     try {
-      const boardResponse = await axios.post('/board/register', {
+      const boardResponse = await api.post('/board/register', {
         title: title.value,
         category: category.value,
         price: price.value,
@@ -220,7 +220,7 @@ async function submitItem() {
           imageFormData.append('uploadFile', file);
         });
         
-        await axios.post('/images/upload', imageFormData, {
+        await api.post('/images/upload', imageFormData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       }

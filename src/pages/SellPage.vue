@@ -67,8 +67,8 @@
 </template>
 
 <script setup>
-import axios from 'axios'
-import { ref, onMounted, computed } from 'vue'
+import api from '@/api';
+import { ref, onMounted, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
@@ -89,17 +89,39 @@ const content = ref('')
 const category = ref(''); // 선택된 카테고리를 저장할 변수
 const categories = ref([
   'Electronics', 'Books', 'Clothings', 'Home & kitchen', 
-  'shoes', 'Beauty', 'Hobby'
+  'Shoes', 'Beauty', 'Hobby'
 ]);
 const selectedFiles = ref([])
 const previewImages = ref([])
 const representativeIndex = ref(0); // 대표 사진 저장할 변수
 
+// 폼 초기화 함수
+function resetForm() {
+  productId.value = null;
+  title.value = '';
+  price.value = '';
+  content.value = '';
+  category.value = '';
+  selectedFiles.value = [];
+  previewImages.value = [];
+  representativeIndex.value = 0;
+}
+
+// 라우트 변경을 감시하는 watch 로직
+watch(() => route.params.id, (newId, oldId) => {
+  // URL의 id 파라미터가 변경될 때마다 이 코드가 실행됩니다.
+  if (!newId) {
+    // newId가 없다는 것은 /sell 경로로 이동했다는 의미입니다.
+    // console.log('등록 모드로 전환합니다.');
+    resetForm();
+  }
+});
+
 // 수정 모드일 때 기존 데이터를 불러오는 함수
 async function fetchProductForEdit() {
   if (!isEditMode.value) return;
   try {
-    const response = await axios.get(`/board/${productId.value}`);
+    const response = await api.get(`/board/${productId.value}`);
     const product = response.data.board;
     
     // 폼 상태를 불러온 데이터로 채움
@@ -147,7 +169,7 @@ async function submitItem() {
   if (isEditMode.value) {
     // --- 수정 로직 ---
     try {
-      await axios.post('/board/update', {
+      await api.post('/board/update', {
         boardId: productId.value,
         title: title.value,
         price: price.value,
@@ -173,7 +195,7 @@ async function submitItem() {
     }
 
     try {
-      const boardResponse = await axios.post('/board/register', {
+      const boardResponse = await api.post('/board/register', {
         title: title.value,
         category: category.value,
         price: price.value,
@@ -198,7 +220,7 @@ async function submitItem() {
           imageFormData.append('uploadFile', file);
         });
         
-        await axios.post('/images/upload', imageFormData, {
+        await api.post('/images/upload', imageFormData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       }

@@ -65,7 +65,13 @@
             <h5 class="font-bold text-lg mb-2">상품 설명</h5>
             <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ product.content }}</p>
           </div>
-          <div class="action-buttons flex gap-4 mt-auto pt-6 border-t">
+          <div class="flex justify-end items-center gap-2 mb-2 text-xs text-gray-500">
+            <p>좋아요 {{ likeCount }}</p>
+            <span class="text-gray-400">&middot;</span>
+            <p>조회수 {{ product.views }}</p>
+          </div>
+          <hr>
+          <div class="action-buttons flex gap-4 mt-auto pt-6">
             <template v-if="isOwner">
                 <button @click="editProduct" class="flex-1 btn btn-secondary">
                     수정하기
@@ -76,8 +82,21 @@
             </template>
             
             <template v-else>
-                <button class="flex-1 btn btn-outline-danger">❤️ 찜하기</button>
-                <button class="flex-1 btn btn-dark">채팅하기</button>
+                <button
+                  @click="toggleLike"
+                  class="flex-1 btn flex items-center justify-center gap-2 whitespace-nowrap py-2 px-4"
+                  :class="isLikedByUser ? 'btn-danger' : 'btn-outline-danger'"
+                >
+                  <span>❤️</span>
+                  <span class="font-semibold">좋아요</span>
+                </button>
+                 <button 
+                  @click="startChat" 
+                  class="flex-1 btn btn-dark py-2 px-4"
+                  :disabled="chatLoading"
+                >
+                  {{ chatLoading ? '채팅방 생성 중...' : '채팅하기' }}
+                </button>
             </template>
           </div>
         </div>
@@ -89,14 +108,18 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
-
+import api from '@/api';
+import SockJS from "sockjs-client";
+import { Stomp } from "@stomp/stompjs"
 const route = useRoute();
 const router = useRouter()
 const productId = ref(null);
 
+// 채팅 관련 상태
+const chatLoading = ref(false);
+let stompClient = null;
 // API로부터 받아온 데이터를 저장할 상태 변수
 const product = ref(null);
 const seller = ref(null);
@@ -104,6 +127,8 @@ const images = ref([]);
 const mainImage = ref(''); // 큰 대표 이미지 URL
 const isLoading = ref(true);
 const error = ref(null);
+const likeCount = ref(0);
+const isLikedByUser = ref(false); // 현재 사용자가 이 글에 좋아요를 눌렀는지 여부
 
 // --- Pinia 스토어에서 로그인 정보 가져오기 ---
 const authStore = useAuthStore();
@@ -112,8 +137,126 @@ const { userId: loggedInUserId } = storeToRefs(authStore);
 // 현재 사용자가 판매자인지 확인하는 computed 속성
 const isOwner = computed(() => {
   // seller 정보와 로그인한 사용자 ID가 모두 존재하고, 두 ID가 일치하는지 확인
-  return seller.value && loggedInUserId.value && seller.value.userId === loggedInUserId.value;
+  return seller.value && loggedInUserId.value && String(seller.value) === String(loggedInUserId.value);
 });
+
+// WebSocket 연결 (필요 시에만)
+const connectWebSocket = () => {
+  if (stompClient) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const socket = new SockJS("http://localhost:8443/ws-chat");
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect(
+      {},
+      () => {
+        console.log('WebSocket 연결 성공');
+        resolve();
+      },
+      (error) => {
+        console.error("WebSocket 연결 실패:", error);
+        reject(error);
+      }
+    );
+  });
+};
+
+// 채팅하기 버튼 클릭 시 실행
+const startChat = async () => {
+  if (!loggedInUserId.value) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  if (isOwner.value) {
+    alert('자신의 상품과는 채팅할 수 없습니다.');
+    return;
+  }
+
+  chatLoading.value = true;
+
+  try {
+    // WebSocket 연결 확인
+    await connectWebSocket();
+
+    // 채팅방 생성 데이터 (현재 유저 = buyer, 게시글 작성자 = seller)
+    const chatRoomData = {
+      buyerId: loggedInUserId.value,      // 현재 로그인한 유저 (구매 희망자)
+      sellerId: seller.value,             // 게시글 작성자 (판매자)
+      boardId: parseInt(productId.value)  // 게시글 번호
+    };
+
+    console.log('채팅방 생성 요청 데이터:', chatRoomData);
+
+    // 기존 채팅방 확인 (2단계 검색)
+    const existingRoomResponse = await api.post('/api/chat/rooms', {
+      userId: loggedInUserId.value 
+    });
+
+    // 1단계: 같은 게시글의 채팅방 확인
+    const sameProductRoom = existingRoomResponse.data.find(room => 
+      parseInt(room.boardId) === parseInt(productId.value) && 
+      ((room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
+       (room.sellerId === loggedInUserId.value && room.buyerId === seller.value))
+    );
+
+    // 2단계: 같은 seller-buyer 조합의 다른 채팅방 확인 (게시글 상관없이)
+    const samePairRoom = existingRoomResponse.data.find(room => 
+      ((room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
+       (room.sellerId === loggedInUserId.value && room.buyerId === seller.value))
+    );
+
+    if (sameProductRoom) {
+      // 동일한 게시글의 채팅방이 있으면 해당 채팅방으로 이동
+      console.log('동일 게시글 채팅방 발견:', sameProductRoom);
+      router.push({
+        path: '/chat',
+        query: { 
+          roomId: sameProductRoom.chatId,
+          userId: loggedInUserId.value 
+        }
+      }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
+    } else if (samePairRoom) {
+      // 같은 seller-buyer 조합의 다른 게시글 채팅방이 있으면 해당 채팅방으로 이동
+      console.log('동일 사용자 조합 채팅방 발견 (다른 게시글):', samePairRoom);
+      console.log(`기존 게시글 #${samePairRoom.boardId} → 현재 게시글 #${productId.value}`);
+      
+      // 기존 채팅방으로 이동하되, 현재 게시글 정보도 함께 전달
+      router.push({
+        path: '/chat',
+        query: { 
+          roomId: samePairRoom.chatId,
+          userId: loggedInUserId.value,
+          newBoardId: parseInt(productId.value) // 새로운 게시글 ID 정보 전달
+        }
+      }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
+    } else {
+      // 새 채팅방 생성 요청
+      console.log('새 채팅방 생성 요청:', chatRoomData);
+      stompClient.send("/app/createRoom", {}, JSON.stringify(chatRoomData));
+      
+      // 채팅방 생성 응답 대기 후 채팅 페이지로 이동
+      setTimeout(() => {
+        router.push({
+          path: '/chat',
+          query: { 
+            userId: loggedInUserId.value,
+            boardId: parseInt(productId.value)
+          }
+        }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
+      }, 1000);
+    }
+
+  } catch (error) {
+    console.error('채팅방 생성 중 오류:', error);
+    alert('채팅방 생성에 실패했습니다. 다시 시도해주세요.');
+  } finally {
+    chatLoading.value = false;
+  }
+};
 
 // 수정 페이지로 이동하는 함수
 function editProduct() {
@@ -127,7 +270,7 @@ async function deleteProduct() {
   if (confirm('정말로 이 상품을 삭제하시겠습니까?')) {
     try {
       // 백엔드에 DELETE 요청 보내기 (API 경로는 예시입니다)
-      await axios.delete(`/board/${productId.value}`,
+      await api.delete(`/board/${productId.value}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('accessToken')}`
@@ -152,7 +295,7 @@ function changeMainImage(imageUrl) {
 async function fetchProductDetails(id) {
   try {
     try {
-        await axios.post(`/views/tracking`, {
+        await api.post(`/views/tracking`, {
           userId: loggedInUserId.value,
           boardId: productId.value
         });
@@ -160,13 +303,19 @@ async function fetchProductDetails(id) {
         console.warn('조회수 추적 실패:', viewError);
         // 조회수 추적 실패해도 상품 정보는 계속 로드
       }
-    const response = await axios.get(`/board/${id}`);
+    const response = await api.get(`/board/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      }
+    });
     
     const data = response.data;
     
     product.value = data.board;
-    seller.value = data.user;
+    seller.value = data.board.userId;
     images.value = data.images;
+    likeCount.value = response.data.board.likes;
+    isLikedByUser.value = response.data.isLikedByUser;
 
     // 첫 번째 이미지를 메인 이미지로 설정
     if (images.value && images.value.length > 0) {
@@ -190,7 +339,7 @@ async function updateStatus() {
   try {
     const newStatus = product.value.saleStatus;
     // JWT 토큰을 헤더에 담아 PATCH 요청 전송
-    await axios.patch(`/board/${productId.value}/status`, 
+    await api.patch(`/board/${productId.value}/status`, 
       { saleStatus: newStatus },
       {
         headers: {
@@ -204,6 +353,26 @@ async function updateStatus() {
     alert(err.response?.data?.message || '상태 변경에 실패했습니다.');
     // 실패 시, 화면의 상태를 원래대로 되돌리기 위해 페이지를 새로고침
     location.reload();
+  }
+}
+
+// 좋아요 버튼 클릭 시 실행될 함수
+async function toggleLike() {
+  // (Optimistic Update) 서버 응답을 기다리지 않고 UI를 즉시 변경
+  isLikedByUser.value = !isLikedByUser.value;
+  likeCount.value += isLikedByUser.value ? 1 : -1;
+
+  try {
+    // 백엔드에 좋아요/취소 요청
+    await api.post(`/board/${productId.value}/like`, {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+    });
+  } catch (err) {
+    console.error('좋아요 처리 실패:', err);
+    // 실패 시 UI를 원래 상태로 되돌림
+    alert('요청에 실패했습니다.');
+    isLikedByUser.value = !isLikedByUser.value;
+    likeCount.value += isLikedByUser.value ? 1 : -1;
   }
 }
 

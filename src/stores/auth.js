@@ -83,9 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
     // 로그인 시 호출되는 함수
     function login(tokenDto) {
         const payload = decodeJwt(tokenDto.accessToken);
-        console.log(1);
         if (payload) {
-            console.log(2);
             localStorage.setItem('accessToken', tokenDto.accessToken);
             localStorage.setItem('refreshToken', tokenDto.refreshToken);
             localStorage.setItem('userId', payload.userId);

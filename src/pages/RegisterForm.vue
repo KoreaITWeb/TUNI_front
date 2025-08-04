@@ -23,7 +23,7 @@
 import { ref, onMounted } from 'vue'
 import '@/assets/styles/pages/RegisterForm.css';
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/api';
 import { useAuthStore } from '@/stores/auth'
 
 // 토큰 관련
@@ -46,7 +46,7 @@ const submitNickname = async () => {
   try {
     isLoading.value = true
 
-    const response = await axios.get('/api/auth/check-nickname', {
+    const response = await api.get('/api/auth/check-nickname', {
       params: {
         nickname: nickname.value.trim(),
       },
@@ -59,7 +59,7 @@ const submitNickname = async () => {
       return
     }
 
-    const response2 = await axios.post('/api/auth/register', {
+    const response2 = await api.post('/api/auth/register', {
         email: email,
         code: code,
         userId: nickname.value.trim(),

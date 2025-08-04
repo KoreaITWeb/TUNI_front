@@ -118,7 +118,10 @@
       <div class="content-area">
         <div v-if="activeMenu === 'wishlist'" class="content-section">
           <h3 class="content-title">찜한 목록</h3>
-          <div class="wishlist-grid">
+          <div v-if="wishlistItems.length === 0" class="empty-message">
+            찜한 상품이 없습니다.
+          </div>
+          <div v-else class="wishlist-grid">
             <div v-for="item in wishlistItems" :key="item.id" class="wishlist-item">
               <img :src="item.image" :alt="item.title" class="wishlist-image">
               <h4 class="wishlist-title">{{ item.title }}</h4>
@@ -129,7 +132,33 @@
 
         <div v-else-if="activeMenu === 'myItems'" class="content-section">
           <h3 class="content-title">내가 등록한 상품</h3>
+          <div class="product-list">
+            <template v-if="myProducts.length === 0">
+              <div>등록한 상품이 없습니다.</div>
+            </template>
+            <template v-else>
+              <div
+                class="product-card"
+                style="width: 12rem; cursor: pointer;"
+                v-for="item in myProducts"
+                :key="`${item.boardId}-${item.title}`"
+                @click="goToDetail(item.boardId)"
+              >
+                <img
+                  :src="item.thumbnailUrl"
+                  alt="상품 이미지"
+                  style="width: 100%; height: 150px; object-fit: cover;"
+                />
+                <div class="card-body">
+                  <h6 class="card-title">{{ item.title }}</h6>
+                  <p class="card-text text-truncate">{{ item.content }}</p>
+                  <p class="card-text fw-bold">{{ item.price?.toLocaleString?.() || 0 }}원</p>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
+
 
         <div v-else-if="activeMenu === 'reviews'" class="content-section">
           <h3 class="content-title">리뷰</h3>
@@ -145,23 +174,27 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed  } from 'vue'
 import { 
   Check, Star, Plus, Edit, Heart, 
   Package, MessageSquare, ShoppingCart 
 } from 'lucide-vue-next'
 import '@/assets/styles/pages/Mypage.css'
+import api from '@/api';
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const activeMenu = ref('wishlist')
+const myProducts = ref([])
+const wishlistItems = ref([])
+const placeholder = '/placeholder.svg'
 
 const user = reactive({
   name: '',
-  department: '컴퓨터공학과',
+  department: '',
   grade: '3',
-  profileImage: '/placeholder.svg?height=96&width=96',
+  profileImage: placeholder,
   rating: 4.8,
   transactionCount: 23
 })
@@ -178,26 +211,32 @@ onMounted(async () => {
   }
 
   try {
-    const res = await axios.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
+    // ② 찜한 게시글 목록 API 호출
+    const resLikes = await axios.get(`/api/mypage/${userId}/likes`)
+    // API 응답을 wishlistItems에 넣기 (필요에 따라 프로퍼티 맞춤)
+    wishlistItems.value = resLikes.data.map(item => ({
+      id: item.boardId,
+      title: item.title,
+      price: item.price,
+      image: item.thumbnailUrl || '/placeholder.svg?height=128&width=128'
+    }))
+
+    const res = await api.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
     console.log('API 응답 데이터:', res.data)
-    
-    Object.assign(user, res.data)
+    console.log('내 상품 목록:', res.data.productList)
+    // Object.assign(user, res.data)
     //user.name = res.data.userId
     //user.schoolname = res.data.schoolId
+    myProducts.value = res.data.productList || []
     user.name = res.data.user.userId; // 또는 user.name이 이미 있을 수 있음
     user.schoolname = res.data.university.name;
-    
+  
     console.log('업데이트된 user 객체:', user)
     
   } catch (err) {
     console.error('사용자 정보 로딩 실패:', err)
   }
 })
-
-
-
-
-
 
 const stats = reactive({
   selling: 5,
@@ -206,26 +245,26 @@ const stats = reactive({
   wishlist: 8
 })
 
-const menuItems = [
-  { id: 'wishlist', title: '찜한목록', count: '8개', icon: Heart },
+const menuItems = computed(() => [
+  { id: 'wishlist', title: '찜한목록', count: `${wishlistItems.value.length}개`, icon: Heart },
   { id: 'myItems', title: '내가 등록한 상품', count: '23개', icon: Package },
   { id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
   { id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
-]
+])
 
 const recentItems = [
   {
     id: 1,
     title: '맥북 프로 13인치',
     price: 1200000,
-    image: '/placeholder.svg?height=48&width=48',
+    image: placeholder,
     status: '판매중'
   },
   {
     id: 2,
     title: '아이패드 에어',
     price: 600000,
-    image: '/placeholder.svg?height=48&width=48',
+    image: placeholder,
     status: '예약중'
   }
 ]
@@ -236,37 +275,17 @@ const recentMessages = [
     sender: '이학생',
     content: '맥북 상태 어떤가요?',
     time: '2분 전',
-    senderImage: '/placeholder.svg?height=32&width=32'
+    senderImage: placeholder
   },
   {
     id: 2,
     sender: '박구매',
     content: '네고 가능한가요?',
     time: '1시간 전',
-    senderImage: '/placeholder.svg?height=32&width=32'
+    senderImage: placeholder
   }
 ]
 
-const wishlistItems = [
-  {
-    id: 1,
-    title: '갤럭시 탭 S8',
-    price: 450000,
-    image: '/placeholder.svg?height=128&width=128'
-  },
-  {
-    id: 2,
-    title: '에어팟 프로',
-    price: 180000,
-    image: '/placeholder.svg?height=128&width=128'
-  },
-  {
-    id: 3,
-    title: '닌텐도 스위치',
-    price: 280000,
-    image: '/placeholder.svg?height=128&width=128'
-  }
-]
 
 const getStatusClass = (status) => {
   switch (status) {

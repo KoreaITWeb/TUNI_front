@@ -1,24 +1,23 @@
 <template>
   <div class="main-page">
-
     <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-container">
         <div class="hero-content">
           <div class="hero-text">
             <h1 class="hero-title">
-              Saheroe transactions<br>
+              Saheroe transactions<br />
               <span class="hero-highlight">on University</span>
             </h1>
             <p class="hero-description">
-              Start trading with students on the same campus.<br>
+              Start trading with students on the same campus.<br />
             </p>
             <div class="hero-actions">
-              <button class="btn-primary btn-large">
+              <button class="btn-primary btn-large" @click="handleGoShop">
                 <Search class="btn-icon" />
                 Go Shop
               </button>
-              <button class="btn-secondary btn-large">
+              <button class="btn-secondary btn-large" @click="handleAddProduct">
                 <Plus class="btn-icon" />
                 Add Product
               </button>
@@ -38,9 +37,17 @@
               </div>
             </div>
           </div>
-          <div class="hero-image">
-            <div class="hero-card">
-              <img src="/placeholder.svg?height=300&width=400" alt="대학생 중고거래" class="hero-img">
+
+          <!-- Hero 이미지 카드 -->
+          <div class="mt-10 lg:mt-0">
+            <div
+              class="w-[240px] h-[360px] bg-transparent rounded-2xl shadow-xl transform rotate-[4deg] flex items-center justify-center"
+            >
+              <img
+                :src="logoTuni"
+                alt="대학생 중고거래 로고"
+                class="h-full object-contain rounded-2xl p-4"
+              />
             </div>
           </div>
         </div>
@@ -52,19 +59,31 @@
       <div class="section-container">
         <div class="section-header">
           <h2 class="section-title">Recent Register Products</h2>
-          <button class="btn-text">View more <ChevronRight class="btn-icon" /></button>
+          <button class="btn-text" @click="handleViewMore">
+            View more <ChevronRight class="btn-icon" />
+          </button>
         </div>
         <div class="products-grid">
-          <div v-for="product in latestProducts" :key="product.id" class="product-card">
+          <div
+            v-for="product in latestProducts"
+            :key="product.id"
+            class="product-card"
+          >
             <div class="product-image-container">
-              <img :src="product.image" :alt="product.title" class="product-image">
+              <img
+                :src="product.image"
+                :alt="product.title"
+                class="product-image"
+              />
               <button class="wishlist-btn">
                 <Heart class="heart-icon" />
               </button>
             </div>
             <div class="product-info">
               <h3 class="product-title">{{ product.title }}</h3>
-              <p class="product-price">{{ product.price.toLocaleString() }}$</p>
+              <p class="product-price">
+                {{ product.price.toLocaleString() }}$
+              </p>
               <div class="product-meta">
                 <span class="product-location">{{ product.location }}</span>
                 <span class="product-time">{{ product.timeAgo }}</span>
@@ -80,7 +99,11 @@
       <div class="section-container">
         <h2 class="section-title">Why TUNI use?</h2>
         <div class="features-grid">
-          <div v-for="feature in features" :key="feature.id" class="feature-card">
+          <div
+            v-for="feature in features"
+            :key="feature.id"
+            class="feature-card"
+          >
             <div class="feature-icon">
               <component :is="feature.icon" class="icon" />
             </div>
@@ -90,27 +113,54 @@
         </div>
       </div>
     </section>
-
-    
-
-
-    
   </div>
 </template>
 
 <script setup>
 import { reactive } from 'vue'
-import '@/assets/styles/pages/Mainpage.css';
-import { 
-  Search, 
-  Plus, 
-  ChevronRight, 
-  Heart,  
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+import '@/assets/styles/pages/Mainpage.css'
+import logoTuni from '@/assets/logo-tuni.png'
+
+import {
+  Search,
+  Plus,
+  ChevronRight,
+  Heart,
   Shield,
   Users,
   Clock,
   CheckCircle
 } from 'lucide-vue-next'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+function handleGoShop() {
+  if (!authStore.isLogin) {
+    alert('로그인 후 이용 가능합니다.')
+    return
+  }
+  router.push('/Shop')
+}
+
+function handleAddProduct() {
+  if (!authStore.isLogin) {
+    alert('로그인 후 이용 가능합니다.')
+    return
+  }
+  router.push('/Sell')
+}
+
+function handleViewMore() {
+  if (!authStore.isLogin) {
+    alert('로그인 후 이용 가능합니다.')
+    return
+  }
+  router.push('/Shop')
+}
 
 const latestProducts = reactive([
   {
@@ -157,7 +207,8 @@ const features = reactive([
   {
     id: 2,
     title: 'Meeting at University',
-    description: 'You can also make friends within your school through meetings within your university.',
+    description:
+      'You can also make friends within your school through meetings within your university.',
     icon: Users
   },
   {
@@ -169,9 +220,9 @@ const features = reactive([
   {
     id: 4,
     title: 'Reliability System',
-    description: 'Find a trustworthy trading partner with our trading reviews and rating system.',
+    description:
+      'Find a trustworthy trading partner with our trading reviews and rating system.',
     icon: CheckCircle
   }
 ])
 </script>
-

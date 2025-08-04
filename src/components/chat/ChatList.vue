@@ -17,36 +17,6 @@
         </div>
         <small class="text-muted">{{ props.currentUserId }}</small>
       </div>
-
-      <!-- 새 채팅방 생성 (개발용) -->
-      <div v-if="showCreateForm" class="mt-3 p-2 bg-light rounded">
-        <h6 class="mb-2">새 채팅방 생성</h6>
-        <input 
-          v-model="newRoom.buyerId" 
-          class="form-control form-control-sm mb-1" 
-          placeholder="구매자 ID"
-        />
-        <input 
-          v-model="newRoom.sellerId" 
-          class="form-control form-control-sm mb-1" 
-          placeholder="판매자 ID"
-        />
-        <input 
-          v-model.number="newRoom.boardId" 
-          type="number" 
-          class="form-control form-control-sm mb-2" 
-          placeholder="게시글 ID"
-        />
-        <button 
-          @click="handleCreateRoom" 
-          class="btn btn-success btn-sm w-100"
-          :disabled="!props.isConnected || !isCreateFormValid"
-        >
-          채팅방 생성
-        </button>
-      </div>
-      
-      
     </div>
 
     <!-- 채팅방 목록 -->
@@ -73,18 +43,21 @@
         <!-- 이름 + 메시지 -->
         <div class="flex-grow-1">
           <div class="fw-bold">{{ getOtherUserName(room) }}</div>
-          <!-- <small class="text-muted">게시글 #{{ room.boardId }}</small> -->
           <div v-if="room.lastMessage" class="text-muted small text-truncate">
             {{ room.lastMessage }}
+          </div>
+          <div v-else class="text-muted small text-truncate">
+            대화를 시작해보세요
           </div>
         </div>
 
         <!-- 시간 및 미읽음 알림 -->
         <div class="text-end">
           <div class="text-muted small">
-            {{ formatTimeAgo(room.updatedAt || room.lastMessageTime) }}
+            {{ formatTimeAgo(room.lastMessageTime || room.updatedAt) }}
           </div>
-          <div v-if="room.unreadCount > 0" class="badge bg-danger rounded-pill">
+          <!-- ✅ 안읽은 메시지 수 표시 디버깅 -->
+          <div v-if="room.unreadCount && room.unreadCount > 0" class="badge bg-danger rounded-pill mt-1">
             {{ room.unreadCount }}
           </div>
         </div>
@@ -100,18 +73,6 @@ import ko from 'date-fns/locale/ko'
 
 const props = defineProps(['chatRooms', 'currentUserId', 'isConnected'])
 
-const showCreateForm = ref(false)
-
-const newRoom = ref({
-  buyerId: '',
-  sellerId: '',
-  boardId: null
-})
-
-const isCreateFormValid = computed(() => {
-  return newRoom.value.buyerId && newRoom.value.sellerId && newRoom.value.boardId
-})
-
 // 이벤트 정의
 const emit = defineEmits(['selectRoom', 'loadRooms', 'createRoom'])
 
@@ -122,28 +83,13 @@ watch(() => props.currentUserId, (newUserId) => {
   }
 }, { immediate: true })
 
-const handleCreateRoom = () => {
-  if (isCreateFormValid.value) {
-    // 채팅방 생성 데이터 구조 확인
-    const roomData = {
-      buyerId: newRoom.value.buyerId,
-      sellerId: newRoom.value.sellerId,
-      boardId: parseInt(newRoom.value.boardId)  // 숫자로 변환
-    };
-    
-    console.log('ChatList에서 생성할 채팅방 데이터:', roomData);
-    emit('createRoom', roomData);
-    
-    // 폼 초기화
-    newRoom.value = {
-      buyerId: '',
-      sellerId: '',
-      boardId: null
-    };
-    
-    alert('채팅방 생성 요청을 보냈습니다.');
-  }
-}
+// 디버깅용 - props 변화 감지
+watch(() => props.chatRooms, (newRooms) => {
+  console.log('🔍 ChatList - 채팅방 목록 업데이트:', newRooms)
+  newRooms.forEach(room => {
+    console.log(`🔍 Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
+  })
+}, { deep: true })
 
 const getOtherUserName = (room) => {
   return room.buyerId === props.currentUserId ? room.sellerId : room.buyerId
@@ -157,9 +103,37 @@ const getOtherUserInitial = (room) => {
 function formatTimeAgo(timeString) {
   if (!timeString) return ''
   
-  return formatDistanceToNow(new Date(timeString), {
-    addSuffix: true,
-    locale: ko,
-  })
+  try {
+    return formatDistanceToNow(new Date(timeString), {
+      addSuffix: true,
+      locale: ko,
+    })
+  } catch (error) {
+    console.error('시간 포맷팅 오류:', error)
+    return ''
+  }
 }
+
+// 컴포넌트 마운트 시 디버깅
+onMounted(() => {
+  console.log('🔍 ChatList 마운트됨')
+  console.log('🔍 현재 chatRooms:', props.chatRooms)
+})
 </script>
+
+<style scoped>
+/* 안읽은 메시지 뱃지 스타일 추가 */
+.badge {
+  min-width: 20px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+.text-truncate {
+  max-width: 200px;
+}
+</style>

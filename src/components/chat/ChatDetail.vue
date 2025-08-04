@@ -214,7 +214,7 @@ watch(() => props.room, () => {
 
 /* 부드러운 스크롤 */
 .chat-scroll-area {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 .dropdown-menu {

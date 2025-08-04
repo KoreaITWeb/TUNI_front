@@ -192,8 +192,8 @@ const startChat = async () => {
     console.log('채팅방 생성 요청 데이터:', chatRoomData);
 
     // 기존 채팅방 확인 (2단계 검색)
-    const existingRoomResponse = await axios.get('http://localhost:8443/api/chat/rooms', {
-      params: { userId: loggedInUserId.value }
+    const existingRoomResponse = await api.post('/api/chat/rooms', {
+      userId: loggedInUserId.value 
     });
 
     // 1단계: 같은 게시글의 채팅방 확인

@@ -151,17 +151,18 @@ import {
   Package, MessageSquare, ShoppingCart 
 } from 'lucide-vue-next'
 import '@/assets/styles/pages/Mypage.css'
-import axios from 'axios'
+import api from '@/api';
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const activeMenu = ref('wishlist')
+const placeholder = '/placeholder.svg'
 
 const user = reactive({
   name: '',
   department: '컴퓨터공학과',
   grade: '3',
-  profileImage: '/placeholder.svg?height=96&width=96',
+  profileImage: placeholder,
   rating: 4.8,
   transactionCount: 23
 })
@@ -178,7 +179,7 @@ onMounted(async () => {
   }
 
   try {
-    const res = await axios.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
+    const res = await api.get(`/api/mypage/${userId}`)  // ✅ 백틱 사용
     console.log('API 응답 데이터:', res.data)
     
     Object.assign(user, res.data)
@@ -218,14 +219,14 @@ const recentItems = [
     id: 1,
     title: '맥북 프로 13인치',
     price: 1200000,
-    image: '/placeholder.svg?height=48&width=48',
+    image: placeholder,
     status: '판매중'
   },
   {
     id: 2,
     title: '아이패드 에어',
     price: 600000,
-    image: '/placeholder.svg?height=48&width=48',
+    image: placeholder,
     status: '예약중'
   }
 ]
@@ -236,14 +237,14 @@ const recentMessages = [
     sender: '이학생',
     content: '맥북 상태 어떤가요?',
     time: '2분 전',
-    senderImage: '/placeholder.svg?height=32&width=32'
+    senderImage: placeholder
   },
   {
     id: 2,
     sender: '박구매',
     content: '네고 가능한가요?',
     time: '1시간 전',
-    senderImage: '/placeholder.svg?height=32&width=32'
+    senderImage: placeholder
   }
 ]
 
@@ -252,19 +253,19 @@ const wishlistItems = [
     id: 1,
     title: '갤럭시 탭 S8',
     price: 450000,
-    image: '/placeholder.svg?height=128&width=128'
+    image: placeholder
   },
   {
     id: 2,
     title: '에어팟 프로',
     price: 180000,
-    image: '/placeholder.svg?height=128&width=128'
+    image: placeholder
   },
   {
     id: 3,
     title: '닌텐도 스위치',
     price: 280000,
-    image: '/placeholder.svg?height=128&width=128'
+    image: placeholder
   }
 ]
 

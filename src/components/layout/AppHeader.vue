@@ -3,7 +3,7 @@
     <div class="header-container">
       <div class="header-content">
         <router-link to="/main" class="logo">
-          <img src="/logo-icon.svg" alt="TUNI 아이콘" class="logo-icon" />
+          <img src="../../../public/placeholder.svg" alt="TUNI 아이콘" class="logo-icon w-12 h-12 rounded-full" />
           <span class="logo-text">TUNI</span>
         </router-link>
           <nav class="navbar">

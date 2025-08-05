@@ -58,6 +58,13 @@
             <button class="btn btn-outline-secondary"  @click="onSearch">🔍</button>
           </div>
           <div class="btn-group">
+            <button
+              class="btn"
+              :class="sortOrder === 'recent' ? 'btn-primary' : 'btn-outline-secondary'"
+              @click="sortOrder = 'recent'"
+              >
+              Recently
+            </button>
               <button
                 class="btn"
                 :class="sortOrder === 'asc' ? 'btn-primary' : 'btn-outline-secondary'"
@@ -162,7 +169,7 @@ const allCategories = [
 const selectedCategories = ref([]);
 const currentPage = ref(1);
 const itemsPerPage = 12;
-const sortOrder = ref(""); 
+const sortOrder = ref("recent"); 
 const tempKeyword = ref(""); 
 const searchKeyword = ref("");
 const inputPage = ref(1);
@@ -170,7 +177,7 @@ const inputPage = ref(1);
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  return filteredProducts.value.slice(start, end);
+  return sortedProducts.value.slice(start, end);
 });
 
 
@@ -189,6 +196,8 @@ const sortedProducts = computed(() => {
     sorted.sort((a, b) => Number(a.price) - Number(b.price));
   } else if (sortOrder.value === "desc") {
     sorted.sort((a, b) => Number(b.price) - Number(a.price));
+  } else if (sortOrder.value === "recent") {
+    sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createAt));
   }
   return sorted;
 });

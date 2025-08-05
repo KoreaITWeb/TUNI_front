@@ -20,6 +20,7 @@
           :messages="messages"
           :currentUserId="currentUserId"
           :isConnected="isConnected"
+          :title="title"
           @sendMessage="sendMessage"
           @quitRoom="quitChatRoom"
         />
@@ -38,7 +39,7 @@ import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import api from '@/api'
 
-const API_BASE = "http://localhost:8443/api/chat"
+const API_BASE = "/api/chat"
 const route = useRoute()
 
 // Store 사용
@@ -55,7 +56,7 @@ let currentChatSubscription = null
 watch(
   () => chatStore.chatRooms,
   (newRooms) => {
-    console.log('🔍 ChatPages - Store chatRooms 변경 감지')
+    // console.log('🔍 ChatPages - Store chatRooms 변경 감지')
     // 강제로 컴포넌트 업데이트
     forceUpdate()
   },
@@ -72,8 +73,9 @@ const currentUserId = computed(() => chatStore.currentUserId || authStore.userId
 const isConnected = computed(() => chatStore.isConnected)
 const chatRooms = computed(() => chatStore.chatRooms)
 const lastMessages = computed(() => chatStore.lastMessages)
+const title = computed(() => chatStore.title)
 chatStore.chatRooms.forEach(room => {
-  console.log(`Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
+  // console.log(`Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
 })
 // lastMessage 정보가 포함된 채팅방 목록 계산
 const enhancedChatRooms = computed(() => {
@@ -97,27 +99,27 @@ const enhancedChatRooms = computed(() => {
 
 // 개별 채팅방 구독
 const subscribeToChatRoom = (chatId) => {
-  console.log('🔍 ChatPages - 개별 채팅방 구독:', chatId)
+  // console.log('🔍 ChatPages - 개별 채팅방 구독:', chatId)
   
   if (!chatStore.isConnected) {
-    console.error("🔍 전역 WebSocket이 연결되어 있지 않습니다")
+    // console.error("🔍 전역 WebSocket이 연결되어 있지 않습니다")
     return
   }
 
   // 이전 구독 해제
   if (currentChatSubscription) {
-    console.log('🔍 이전 채팅방 구독 해제')
+    // console.log('🔍 이전 채팅방 구독 해제')
     currentChatSubscription.unsubscribe()
     currentChatSubscription = null
   }
 
   // 전역 Store의 subscribeToChatRoom 사용
   currentChatSubscription = chatStore.subscribeToChatRoom(chatId, (message) => {
-    console.log('🔍 ChatPages - 개별 채팅방 메시지 수신:', message)
+    // console.log('🔍 ChatPages - 개별 채팅방 메시지 수신:', message)
     
     // 현재 선택된 채팅방의 메시지만 messages 배열에 추가
     if (selectedRoom.value && message.chatId === selectedRoom.value.chatId) {
-      console.log('🔍 현재 채팅방 메시지 - messages 배열에 추가')
+      // console.log('🔍 현재 채팅방 메시지 - messages 배열에 추가')
       
       // 중복 체크
       const exists = messages.value.some(msg => 
@@ -129,15 +131,15 @@ const subscribeToChatRoom = (chatId) => {
       if (!exists) {
         messages.value.push(message)
         messages.value = [...messages.value]
-        console.log('🔍 현재 메시지 목록 길이:', messages.value.length)
+        // console.log('🔍 현재 메시지 목록 길이:', messages.value.length)
       }
     }
   })
   
   if (currentChatSubscription) {
-    console.log('🔍 개별 채팅방 구독 성공')
+    // console.log('🔍 개별 채팅방 구독 성공')
   } else {
-    console.error('🔍 개별 채팅방 구독 실패')
+    // console.error('🔍 개별 채팅방 구독 실패')
   }
 }
 
@@ -148,7 +150,7 @@ const loadChatRoomsByUser = async (userId) => {
     return
   }
 
-  console.log('🔍 ChatPages - 채팅방 목록 로드 요청')
+  // console.log('🔍 ChatPages - 채팅방 목록 로드 요청')
   
   // 전역 Store에서 로드
   await chatStore.loadChatRooms(userId)
@@ -161,20 +163,21 @@ const loadChatRoomsByUser = async (userId) => {
 const handleAutoSelectRoom = async () => {
   const { roomId, boardId, newBoardId } = route.query
   
-  console.log('자동 채팅방 선택 시작, 쿼리:', { roomId, boardId, newBoardId })
-  console.log('WebSocket 연결 상태:', isConnected.value)
+  // console.log('자동 채팅방 선택 시작, 쿼리:', { roomId, boardId, newBoardId })
+  // console.log('WebSocket 연결 상태:', isConnected.value)
   
   // WebSocket 연결이 안 되어 있으면 잠시 대기
   if (!isConnected.value) {
-    console.log('WebSocket 연결 대기 중...')
+    // console.log('WebSocket 연결 대기 중...')
     setTimeout(handleAutoSelectRoom, 500)
     return
   }
   
   if (roomId) {
-    const targetRoom = chatRooms.value.find(room => room.chatId === parseInt(roomId))
+    const targetRoom = chatRooms.value.find(room => room.chatId === parseInt(roomId)&&
+  room.sellerId !== null && room.buyerId !== null)
     if (targetRoom) {
-      console.log('URL roomId로 채팅방 자동 선택:', targetRoom)
+      // console.log('URL roomId로 채팅방 자동 선택:', targetRoom)
       await selectRoom(targetRoom)
       return
     }
@@ -182,10 +185,10 @@ const handleAutoSelectRoom = async () => {
   
   if (newBoardId) {
     const targetRoom = chatRooms.value.find(room => 
-      parseInt(room.boardId) === parseInt(newBoardId)
-    )
+      parseInt(room.boardId) === parseInt(newBoardId)&&
+  room.sellerId !== null && room.buyerId !== null)
     if (targetRoom) {
-      console.log('URL newBoardId로 채팅방 자동 선택:', targetRoom)
+      // console.log('URL newBoardId로 채팅방 자동 선택:', targetRoom)
       await selectRoom(targetRoom)
       return
     }
@@ -193,14 +196,15 @@ const handleAutoSelectRoom = async () => {
   
   if (boardId) {
     const targetRoom = chatRooms.value.find(room => 
-      parseInt(room.boardId) === parseInt(boardId)
+      parseInt(room.boardId) === parseInt(boardId)&&
+  room.sellerId !== null && room.buyerId !== null
     )
     if (targetRoom) {
-      console.log('URL boardId로 채팅방 자동 선택:', targetRoom)
+      // console.log('URL boardId로 채팅방 자동 선택:', targetRoom)
       await selectRoom(targetRoom)
       return
     } else {
-      console.log('boardId에 해당하는 채팅방을 찾을 수 없음. 채팅방 생성 대기 중...')
+      // console.log('boardId에 해당하는 채팅방을 찾을 수 없음. 채팅방 생성 대기 중...')
     }
   }
 }
@@ -220,7 +224,7 @@ const createChatRoom = (roomData) => {
 
 // 채팅방 선택
 const selectRoom = async (room) => {
-  console.log('🔍 채팅방 선택:', room)
+  // console.log('🔍 채팅방 선택:', room)
   selectedRoom.value = room
   messages.value = []
 
@@ -230,12 +234,12 @@ const selectRoom = async (room) => {
       chatId: room.chatId
     })
     messages.value = res.data || []
-    console.log('🔍 채팅방 메시지 로드 완료:', messages.value.length, '개')
+    // console.log('🔍 채팅방 메시지 로드 완료:', messages.value.length, '개')
 
     // 메시지 로드 후 마지막 메시지 정보 업데이트
     if (messages.value.length > 0) {
       const lastMsg = messages.value[messages.value.length - 1]
-      console.log('🔍 선택한 채팅방의 마지막 메시지:', lastMsg)
+      // console.log('🔍 선택한 채팅방의 마지막 메시지:', lastMsg)
       
       // 전역 Store에 마지막 메시지 업데이트
       chatStore.updateLastMessage(room.chatId, {
@@ -249,17 +253,17 @@ const selectRoom = async (room) => {
     chatStore.markRoomAsRead(room.chatId)
 
   } catch (e) {
-    console.error("메시지 불러오기 실패", e)
+    // console.error("메시지 불러오기 실패", e)
   }
 
   // 채팅방 구독
-  console.log('🔍 WebSocket 연결 상태:', isConnected.value)
+  // console.log('🔍 WebSocket 연결 상태:', isConnected.value)
   
   if (isConnected.value) {
-    console.log('🔍 즉시 구독 시도')
+    // console.log('🔍 즉시 구독 시도')
     subscribeToChatRoom(room.chatId)
   } else {
-    console.log('🔍 WebSocket 연결 대기 중, 연결 후 구독 예정')
+    // console.log('🔍 WebSocket 연결 대기 중, 연결 후 구독 예정')
     
     // WebSocket 연결 대기 후 구독
     let attempts = 0
@@ -267,16 +271,16 @@ const selectRoom = async (room) => {
     
     const checkConnection = setInterval(() => {
       attempts++
-      console.log(`🔍 WebSocket 연결 확인 시도 ${attempts}/${maxAttempts}`)
+      // console.log(`🔍 WebSocket 연결 확인 시도 ${attempts}/${maxAttempts}`)
       
       if (isConnected.value) {
-        console.log('🔍 WebSocket 연결됨, 이제 구독 시도')
+        // console.log('🔍 WebSocket 연결됨, 이제 구독 시도')
         subscribeToChatRoom(room.chatId)
         clearInterval(checkConnection)
       } else if (attempts >= maxAttempts) {
-        console.error('🔍 WebSocket 연결 타임아웃 - 실시간 채팅 불가능')
+        // console.error('🔍 WebSocket 연결 타임아웃 - 실시간 채팅 불가능')
         clearInterval(checkConnection)
-        alert('실시간 채팅 연결에 실패했습니다. 페이지를 새로고침해주세요.')
+        alert('채팅 연결에 실패했습니다. 페이지를 새로고침해주세요.')
       }
     }, 100)
   }
@@ -284,16 +288,16 @@ const selectRoom = async (room) => {
 
 // 메시지 전송
 const sendMessage = async (messageData) => {
-  console.log('🔍 sendMessage 호출됨:', messageData)
+  // console.log('🔍 sendMessage 호출됨:', messageData)
   
   if (!chatStore.isConnected) {
-    console.error('🔍 WebSocket이 연결되어 있지 않습니다.')
+    // console.error('🔍 WebSocket이 연결되어 있지 않습니다.')
     alert("WebSocket이 연결되어 있지 않습니다.")
     return
   }
 
   if (!selectedRoom.value) {
-    console.error('🔍 선택된 채팅방이 없습니다.')
+    // console.error('🔍 선택된 채팅방이 없습니다.')
     alert("채팅방을 선택해주세요.")
     return
   }
@@ -304,7 +308,7 @@ const sendMessage = async (messageData) => {
     regdate: new Date().toISOString(),
   }
 
-  console.log('🔍 전송할 메시지:', msg)
+  // console.log('🔍 전송할 메시지:', msg)
 
   try {
     // lastMessages는 즉시 업데이트 (ChatList 표시용)
@@ -315,16 +319,16 @@ const sendMessage = async (messageData) => {
     })
 
     // 서버로 메시지 전송
-    console.log('🔍 서버로 메시지 전송 중...')
+    // console.log('🔍 서버로 메시지 전송 중...')
     const success = chatStore.sendMessage(msg)
     
     if (success) {
-      console.log('🔍 메시지 전송 완료')
+      // console.log('🔍 메시지 전송 완료')
     } else {
       throw new Error('메시지 전송 실패')
     }
   } catch (error) {
-    console.error('🔍 메시지 전송 실패:', error)
+    // console.error('🔍 메시지 전송 실패:', error)
     alert('메시지 전송에 실패했습니다. 다시 시도해주세요.')
   }
 }
@@ -348,7 +352,7 @@ const quitChatRoom = async () => {
       action: 'quit'
     }
 
-    console.log('채팅방 나가기 요청:', quitData)
+    // console.log('채팅방 나가기 요청:', quitData)
 
     const success = chatStore.quitRoom(quitData)
     
@@ -359,19 +363,19 @@ const quitChatRoom = async () => {
       // 현재 선택된 채팅방 초기화
       if (currentChatSubscription) {
         currentChatSubscription.unsubscribe()
-        currentChatSubscription = null
+        // currentChatSubscription = null
       }
       
       selectedRoom.value = null
       messages.value = []
       
-      alert('채팅방에서 나갔습니다.')
+      // alert('채팅방에서 나갔습니다.')
     } else {
       throw new Error('채팅방 나가기 실패')
     }
 
   } catch (error) {
-    console.error('채팅방 나가기 실패:', error)
+    // console.error('채팅방 나가기 실패:', error)
     alert('채팅방 나가기에 실패했습니다. 다시 시도해주세요.')
     
     // 실패 시 채팅방 목록 다시 로드
@@ -386,8 +390,8 @@ const checkAndSelectNewRoom = async (newRoom) => {
   const { boardId } = route.query
   
   // URL에 boardId가 있고, 새로 생성된 채팅방이 해당 게시글의 채팅방이면 자동 선택
-  if (boardId && parseInt(newRoom.boardId) === parseInt(boardId) && !selectedRoom.value) {
-    console.log('새로 생성된 채팅방 자동 선택:', newRoom)
+  if (boardId && parseInt(newRoom.boardId) === parseInt(boardId) && !selectedRoom.value && newRoom.sellerId!==null && newRoom.buyerId!==null) {
+    // console.log('새로 생성된 채팅방 자동 선택:', newRoom)
     await selectRoom(newRoom)
   }
 }
@@ -396,18 +400,34 @@ const checkAndSelectNewRoom = async (newRoom) => {
 const handleRoomQuitEvent = (event) => {
   const quitInfo = event.detail
   
-  // 현재 선택된 채팅방이 나간 방이면 초기화
+  // 현재 선택된 채팅방이 나간 방이면
   if (selectedRoom.value && selectedRoom.value.chatId === quitInfo.chatId) {
-    if (currentChatSubscription) {
-      currentChatSubscription.unsubscribe()
-      currentChatSubscription = null
-    }
-    
-    selectedRoom.value = null
-    messages.value = []
-    
     if (quitInfo.userId !== currentUserId.value) {
-      alert('상대방이 채팅방을 나갔습니다. 채팅방이 종료됩니다.')
+      // 상대방이 나간 경우 - 시스템 메시지 추가
+      const systemMessage = {
+        chatId: quitInfo.chatId,
+        content: quitInfo.systemMessage || `${quitInfo.userId}님이 채팅방을 나갔습니다.`,
+        regdate: new Date().toISOString(),
+        userId: 'system',
+        boardId: selectedRoom.value.boardId
+      }
+      
+      messages.value.push(systemMessage)
+      messages.value = [...messages.value]
+      
+      // 채팅방 상태 업데이트
+      selectedRoom.value.isOtherUserLeft = true
+      
+      alert('상대방이 채팅방을 나갔습니다.')
+    } else {
+      // 내가 나간 경우
+      if (currentChatSubscription) {
+        currentChatSubscription.unsubscribe()
+        currentChatSubscription = null
+      }
+      
+      selectedRoom.value = null
+      messages.value = []
     }
   }
 }
@@ -418,7 +438,7 @@ const handleNewMessageEvent = (event) => {
   
   // 현재 선택된 채팅방의 메시지인 경우 messages 배열에 추가
   if (selectedRoom.value && messageNotification.chatId === selectedRoom.value.chatId) {
-    console.log('🔍 전역 이벤트로 메시지 수신:', messageNotification)
+    // console.log('🔍 전역 이벤트로 메시지 수신:', messageNotification)
     
     const fullMessage = {
       chatId: messageNotification.chatId,
@@ -446,7 +466,6 @@ const handleNewMessageEvent = (event) => {
 const handleCheckCurrentRoom = (event) => {
   const { chatId } = event.detail
   const isCurrentRoom = selectedRoom.value && selectedRoom.value.chatId === chatId
-  
   // 응답 이벤트 발생
   const responseEvent = new CustomEvent('currentRoomResponse', {
     detail: { isCurrentRoom }
@@ -456,29 +475,57 @@ const handleCheckCurrentRoom = (event) => {
 
 // 컴포넌트 마운트 시 초기화
 onMounted(async () => {
-  console.log('🔍 ChatPages 마운트됨')
+  // console.log('🔍 ChatPages 마운트됨')
   
   // 로그인된 사용자 ID 설정
   if (loggedInUserId.value) {
     chatStore.currentUserId = loggedInUserId.value
   }
   
-  // URL 쿼리에서 사용자 ID 확인
-  const { userId } = route.query
-  if (userId) {
-    chatStore.currentUserId = userId
-  }
+  // Store에서 대기 중인 채팅방 정보 가져오기
+  const pendingRoom = chatStore.getPendingRoom()
   
-  // 전역 WebSocket이 연결되지 않았다면 연결
-  if (!chatStore.isConnected && currentUserId.value) {
-    console.log('🔍 전역 WebSocket 연결 시작')
-    chatStore.connectGlobalWebSocket(currentUserId.value)
+  if (pendingRoom) {
+    // console.log('🔍 대기 중인 채팅방 정보 발견:', pendingRoom)
     
-    // WebSocket 연결 시 자동으로 채팅방 목록을 로드하므로 여기서는 하지 않음
-  } else if (chatRooms.value.length > 0) {
-    // 이미 채팅방 목록이 있으면 재로드하지 않고 자동 선택만 실행
-    console.log('🔍 기존 채팅방 목록 사용')
-    await handleAutoSelectRoom()
+    // 전역 WebSocket이 연결되지 않았다면 연결
+    if (!chatStore.isConnected && (pendingRoom.userId || currentUserId.value)) {
+      // console.log('🔍 전역 WebSocket 연결 시작')
+      chatStore.connectGlobalWebSocket(pendingRoom.userId || currentUserId.value)
+      
+      // WebSocket 연결 대기
+      let attempts = 0
+      const checkConnection = setInterval(async () => {
+        attempts++
+        if (chatStore.isConnected || attempts > 20) {
+          clearInterval(checkConnection)
+          
+          // 채팅방 목록이 없다면 로드
+          if (chatRooms.value.length === 0) {
+            await loadChatRoomsByUser(pendingRoom.userId || currentUserId.value)
+          }
+          
+          // 대기 중인 채팅방 처리
+          handlePendingRoom(pendingRoom)
+        }
+      }, 100)
+    } else {
+      // 이미 연결되어 있으면 바로 처리
+      handlePendingRoom(pendingRoom)
+    }
+  } else {
+    // 일반적인 초기화 로직
+    if (!chatStore.isConnected && currentUserId.value) {
+      // console.log('🔍 전역 WebSocket 연결 시작')
+      chatStore.connectGlobalWebSocket(currentUserId.value)
+    }
+    
+    if (chatRooms.value.length === 0 && currentUserId.value) {
+      // console.log('🔍 채팅방 목록 로드')
+      await loadChatRoomsByUser(currentUserId.value)
+    } else if (chatRooms.value.length > 0) {
+      await handleAutoSelectRoom()
+    }
   }
   
   // 이벤트 리스너 등록
@@ -487,8 +534,42 @@ onMounted(async () => {
   window.addEventListener('checkCurrentRoom', handleCheckCurrentRoom)
 })
 
+// 대기 중인 채팅방 처리 함수 추가
+const handlePendingRoom = async (pendingRoom) => {
+  if (pendingRoom.roomId) {
+    // 특정 채팅방 선택
+    const targetRoom = chatRooms.value.find(room => room.chatId === pendingRoom.roomId)
+    if (targetRoom) {
+      // console.log('🔍 대기 중인 채팅방 선택:', targetRoom)
+      await selectRoom(targetRoom)
+    }
+  } else if (pendingRoom.boardId && pendingRoom.isNewRoom) {
+    // 새 채팅방 생성 대기
+    // console.log('🔍 새 채팅방 생성 대기 중...')
+    
+    // 새 채팅방이 생성될 때까지 대기
+    const checkNewRoom = setInterval(() => {
+      const newRoom = chatRooms.value.find(room => 
+        parseInt(room.boardId) === pendingRoom.boardId&&
+        room.buyerId !== null &&
+        room.sellerId !== null
+      )
+      
+      if (newRoom) {
+        clearInterval(checkNewRoom)
+        // console.log('🔍 새 채팅방 발견:', newRoom)
+        selectRoom(newRoom)
+      }
+    }, 500)
+    
+    // 10초 후 타임아웃
+    setTimeout(() => {
+      clearInterval(checkNewRoom)
+    }, 10000)
+  }
+}
 onUnmounted(() => {
-  console.log('🔍 ChatPages 언마운트됨')
+  // console.log('🔍 ChatPages 언마운트됨')
   
   // 개별 구독만 해제 (전역 WebSocket은 유지)
   if (currentChatSubscription) {
@@ -506,14 +587,14 @@ onUnmounted(() => {
 watch(
   () => chatStore.isConnected,
   (newValue) => {
-    console.log('🔍 전역 WebSocket 연결 상태 변경:', newValue)
+    // console.log('🔍 전역 WebSocket 연결 상태 변경:', newValue)
   }
 )
 
 watch(
   () => chatRooms.value.length,
   (newLength) => {
-    console.log('🔍 채팅방 목록 길이 변경:', newLength)
+    // console.log('🔍 채팅방 목록 길이 변경:', newLength)
     
     // 채팅방 목록이 로드된 후 자동 선택 재시도
     if (newLength > 0 && !selectedRoom.value) {
@@ -536,7 +617,7 @@ watch(
         newRoom.buyerId === currentUserId.value ||
         newRoom.sellerId === currentUserId.value
       )) {
-        console.log('🔍 새 채팅방 감지:', newRoom)
+        // console.log('🔍 새 채팅방 감지:', newRoom)
         checkAndSelectNewRoom(newRoom)
       }
     }

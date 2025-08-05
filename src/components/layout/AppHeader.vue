@@ -4,7 +4,7 @@
       <div class="flex justify-between items-center h-16">
         <!-- 로고 -->
         <router-link to="/main" class="flex items-center space-x-2">
-          <img :src="logoTuni" alt="TUNI 아이콘" class="h-8 w-8" />
+          <img :src="logoTuni" alt="TUNI 아이콘" class="h-20 w-auto sm:h-16" />
           <span class="text-xl font-bold text-gray-800">TUNI</span>
         </router-link>
         
@@ -65,7 +65,7 @@
 </template>
 
 <script setup>
-import logoTuni from '@/assets/logo-tuni.png'
+import logoTuni from '@/assets/logo-tuni-icon.png'
 import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -116,11 +116,15 @@ watch(
   () => authStore.userId,
   async (newUserId) => {
     if (newUserId && !chatStore.isConnected) {
+
       fetchProfileImage(newUserId)
       console.log('🔍 Header - 사용자 로그인, WebSocket 연결 시작')
+
+      // console.log('🔍 Header - 사용자 로그인, WebSocket 연결 시작')
+
       chatStore.connectGlobalWebSocket(newUserId)
     } else if (!newUserId && chatStore.isConnected) {
-      console.log('🔍 Header - 사용자 로그아웃, WebSocket 연결 해제')
+      // console.log('🔍 Header - 사용자 로그아웃, WebSocket 연결 해제')
       chatStore.disconnectGlobalWebSocket()
       profileImgUrl.value = ''
     }

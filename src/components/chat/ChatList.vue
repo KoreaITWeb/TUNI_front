@@ -42,7 +42,11 @@
 
         <!-- 이름 + 메시지 -->
         <div class="flex-grow-1">
-          <div class="fw-bold">{{ getOtherUserName(room) }}</div>
+          <div class="fw-bold">
+            {{ getOtherUserName(room) }}
+            <span v-if="room.isNew" class="badge bg-primary ms-2">NEW</span>
+            <span v-if="room.isOtherUserLeft" class="badge bg-secondary ms-2">나감</span>
+          </div>
           <div v-if="room.lastMessage" class="text-muted small text-truncate">
             {{ room.lastMessage }}
           </div>
@@ -85,9 +89,9 @@ watch(() => props.currentUserId, (newUserId) => {
 
 // 디버깅용 - props 변화 감지
 watch(() => props.chatRooms, (newRooms) => {
-  console.log('🔍 ChatList - 채팅방 목록 업데이트:', newRooms)
+  // console.log('🔍 ChatList - 채팅방 목록 업데이트:', newRooms)
   newRooms.forEach(room => {
-    console.log(`🔍 Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
+    // console.log(`🔍 Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
   })
 }, { deep: true })
 
@@ -109,24 +113,45 @@ function formatTimeAgo(timeString) {
       locale: ko,
     })
   } catch (error) {
-    console.error('시간 포맷팅 오류:', error)
+    // console.error('시간 포맷팅 오류:', error)
     return ''
   }
 }
 
 // 컴포넌트 마운트 시 디버깅
 onMounted(() => {
-  console.log('🔍 ChatList 마운트됨')
-  console.log('🔍 현재 chatRooms:', props.chatRooms)
+  // console.log('🔍 ChatList 마운트됨')
+  // console.log('🔍 현재 chatRooms:', props.chatRooms)
 })
 </script>
 
 <style scoped>
-/* 안읽은 메시지 뱃지 스타일 추가 */
+/* 기존 스타일 유지 */
+
+/* ✅ 채팅방 상태별 스타일 */
+.room-left {
+  opacity: 0.7;
+  background-color: #f8f9fa;
+}
+
+.room-left:hover {
+  background-color: #e9ecef;
+}
+
 .badge {
   min-width: 20px;
   padding: 4px 8px;
   font-size: 11px;
+}
+
+.badge.bg-primary {
+  animation: newBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes newBadgePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 .list-group-item:hover {

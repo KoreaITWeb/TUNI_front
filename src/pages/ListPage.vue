@@ -31,24 +31,22 @@
           >
           <label class="form-check-label" :for="category">{{ category }}</label>
         </div>
-
-  <label class="form-label mt-3">Price</label>
-
-  <div class="d-flex gap-2">
-  <input
-    type="number"
-    class="form-control"
-    placeholder="Min"
-    v-model="minPrice"
-  >
-  <span>~</span>
-  <input
-    type="number"
-    class="form-control"
-    placeholder="Max"
-    v-model="maxPrice"
-  >
-</div>
+        <label class="form-label mt-3">Price</label>
+        <div class="d-flex gap-2">
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Min"
+          v-model="minPrice"
+        >
+        <span>~</span>
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Max"
+          v-model="maxPrice"
+        >
+      </div>
 </div>
 
       <!-- 오른쪽 콘텐츠 영역 -->
@@ -56,13 +54,31 @@
         <!-- 검색 & 정렬 -->
         <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
           <div class="input-group w-50">
-            <input type="text" class="form-control" placeholder="Search">
-            <button class="btn btn-outline-secondary" type="button">🔍</button>
+            <input type="text" class="form-control" placeholder="Search" v-model = "tempKeyword" @keyup.enter="onSearch">
+            <button class="btn btn-outline-secondary"  @click="onSearch">🔍</button>
           </div>
           <div class="btn-group">
-            <button class="btn btn-dark">New</button>
-            <button class="btn btn-outline-secondary">Price ascending</button>
-            <button class="btn btn-outline-secondary">Price descending</button>
+            <button
+              class="btn"
+              :class="sortOrder === 'recent' ? 'btn-primary' : 'btn-outline-secondary'"
+              @click="sortOrder = 'recent'"
+              >
+              Recently
+            </button>
+              <button
+                class="btn"
+                :class="sortOrder === 'asc' ? 'btn-primary' : 'btn-outline-secondary'"
+                @click="sortOrder = 'asc'"
+              >
+                Price ascending
+              </button>
+              <button
+                class="btn"
+                :class="sortOrder === 'desc' ? 'btn-primary' : 'btn-outline-secondary'"
+                @click="sortOrder = 'desc'"
+              >
+                Price descending
+              </button>
           </div>
         </div>
 
@@ -94,37 +110,38 @@
             </div>
           </div>
         </div>
-        <nav class="mt-4" style="display: flex; justify-content: center;">
-          <ul class="pagination">
-            <li
-              class="page-item"
-              :class="{ disabled: currentPage === 1 }"
-              @click="goToPage(currentPage - 1)"
-            >
-              <a class="page-link" style="cursor:pointer;">← Previous</a>
-            </li>
+        <nav aria-label="Page navigation" class="d-flex justify-content-center align-items-center mt-4 gap-3">
+              <button
+                class="btn btn-outline-primary"
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 1"
+              >
+                ← Previous
+              </button>
 
-            <li
-              class="page-item"
-              v-for="page in totalPages"
-              :key="page"
-              :class="{ active: currentPage === page }"
-              @click="goToPage(page)"
-            >
-              <a class="page-link" style="cursor:pointer;">{{ page }}</a>
-            </li>
+              <!-- 입력창 + 총 페이지 -->
+              <div class="d-flex align-items-center gap-2">
+                <input
+                  type="number"
+                  v-model.number="inputPage"
+                  :min="1"
+                  :max="totalPages"
+                  class="form-control"
+                  style="width: 60px; text-align: center;"
+                  @keyup.enter="goToInputPage"
+                />
+                / {{ totalPages }}
+              </div>
 
-            <li
-              class="page-item"
-              :class="{ disabled: currentPage === totalPages }"
-              @click="goToPage(currentPage + 1)"
-            >
-              <a class="page-link" style="cursor:pointer;">Next →</a>
-            </li>
-          </ul>
+              <!-- Next → 버튼 -->
+              <button
+                class="btn btn-outline-primary"
+                @click="goToPage(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+              >
+                Next →
+              </button>
         </nav>
-
-
       </div>
     </div>
   </div>
@@ -152,26 +169,42 @@ const allCategories = [
 const selectedCategories = ref([]);
 const currentPage = ref(1);
 const itemsPerPage = 12;
+const sortOrder = ref("recent"); 
+const tempKeyword = ref(""); 
+const searchKeyword = ref("");
+const inputPage = ref(1);
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  return filteredProducts.value.slice(start, end);
+  return sortedProducts.value.slice(start, end);
 });
 
+
 const totalPages = computed(() => {
-  return Math.ceil(filteredProducts.value.length / itemsPerPage);
+  const total = Math.ceil(filteredProducts.value.length / itemsPerPage);
+  return total > 0 ? total : 1;
 });
 
 // 토큰 관련
 const authStore = useAuthStore()
 const { isLogin, userId, schoolId } = storeToRefs(authStore);
 
+const sortedProducts = computed(() => {
+  const sorted = [...filteredProducts.value];
+  if (sortOrder.value === "asc") {
+    sorted.sort((a, b) => Number(a.price) - Number(b.price));
+  } else if (sortOrder.value === "desc") {
+    sorted.sort((a, b) => Number(b.price) - Number(a.price));
+  } else if (sortOrder.value === "recent") {
+    sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createAt));
+  }
+  return sorted;
+});
+
+
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
-    console.log(`--- Checking Product ID: ${product.boardId} ---`);
-    console.log(`DB Category: "${product.category}" vs Selected:`, selectedCategories.value);
-    console.log(`DB Price: "${product.price}" vs Filter Range: ${minPrice.value}-${maxPrice.value}`);
     
     // 카테고리 조건
     const categoryMatch =
@@ -185,13 +218,25 @@ const filteredProducts = computed(() => {
     const minOk = !minPrice.value || price >= min;
     const maxOk = !maxPrice.value || price <= max;
 
-    return categoryMatch && minOk && maxOk;
+    const keyword = searchKeyword.value.trim().toLowerCase();
+    const title = product.title?.toLowerCase() || "";
+    const content = product.content?.toLowerCase() || "";
+    const keywordMatch =
+      keyword === "" ||
+      title.includes(keyword) ||
+      content.includes(keyword);
+
+    return categoryMatch && minOk && maxOk && keywordMatch;
   });
 });
 
 // 필터 조건이 변경될 때마다 현재 페이지를 1로 리셋합니다.
 watch([selectedCategories, minPrice, maxPrice], () => {
   currentPage.value = 1;
+});
+
+watch(currentPage, (newPage) => {
+  inputPage.value = newPage;
 });
 
 // 백엔드 API를 호출하여 상품 목록을 가져오는 함수
@@ -239,6 +284,19 @@ async function fetchProducts() {
 function goToDetail(boardId) {
   router.push(`/details/${boardId}`);
 };
+
+function onSearch() {
+  searchKeyword.value = tempKeyword.value;
+  currentPage.value = 1; // 검색 결과가 바뀌었으니 페이지 초기화
+}
+
+function goToInputPage() {
+  if (inputPage.value >= 1 && inputPage.value <= totalPages.value) {
+    currentPage.value = inputPage.value;
+  } else {
+    alert(`1부터 ${totalPages.value} 사이의 숫자를 입력해주세요.`);
+  }
+}
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {

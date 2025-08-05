@@ -31,24 +31,22 @@
           >
           <label class="form-check-label" :for="category">{{ category }}</label>
         </div>
-
-  <label class="form-label mt-3">Price</label>
-
-  <div class="d-flex gap-2">
-  <input
-    type="number"
-    class="form-control"
-    placeholder="Min"
-    v-model="minPrice"
-  >
-  <span>~</span>
-  <input
-    type="number"
-    class="form-control"
-    placeholder="Max"
-    v-model="maxPrice"
-  >
-</div>
+        <label class="form-label mt-3">Price</label>
+        <div class="d-flex gap-2">
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Min"
+          v-model="minPrice"
+        >
+        <span>~</span>
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Max"
+          v-model="maxPrice"
+        >
+      </div>
 </div>
 
       <!-- 오른쪽 콘텐츠 영역 -->
@@ -56,13 +54,24 @@
         <!-- 검색 & 정렬 -->
         <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
           <div class="input-group w-50">
-            <input type="text" class="form-control" placeholder="Search">
-            <button class="btn btn-outline-secondary" type="button">🔍</button>
+            <input type="text" class="form-control" placeholder="Search" v-model = "tempKeyword" @keyup.enter="onSearch">
+            <button class="btn btn-outline-secondary"  @click="onSearch">🔍</button>
           </div>
           <div class="btn-group">
-            <button class="btn btn-dark">New</button>
-            <button class="btn btn-outline-secondary">Price ascending</button>
-            <button class="btn btn-outline-secondary">Price descending</button>
+              <button
+                class="btn"
+                :class="sortOrder === 'asc' ? 'btn-primary' : 'btn-outline-secondary'"
+                @click="sortOrder = 'asc'"
+              >
+                Price ascending
+              </button>
+              <button
+                class="btn"
+                :class="sortOrder === 'desc' ? 'btn-primary' : 'btn-outline-secondary'"
+                @click="sortOrder = 'desc'"
+              >
+                Price descending
+              </button>
           </div>
         </div>
 
@@ -90,7 +99,7 @@
             <div class="card-body">
               <h6 class="card-title">{{ product.title }}</h6>
               <p class="card-text text-truncate">{{ product.content }}</p> 
-              <p class="card-text fw-bold">{{ product.price }}원</p>
+              <p class="card-text fw-bold">$ {{ product.price }}</p>
             </div>
           </div>
         </div>
@@ -152,6 +161,10 @@ const allCategories = [
 const selectedCategories = ref([]);
 const currentPage = ref(1);
 const itemsPerPage = 12;
+const sortOrder = ref(""); 
+const tempKeyword = ref(""); 
+const searchKeyword = ref("");
+
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
@@ -166,6 +179,17 @@ const totalPages = computed(() => {
 // 토큰 관련
 const authStore = useAuthStore()
 const { isLogin, userId, schoolId } = storeToRefs(authStore);
+
+const sortedProducts = computed(() => {
+  const sorted = [...filteredProducts.value];
+  if (sortOrder.value === "asc") {
+    sorted.sort((a, b) => Number(a.price) - Number(b.price));
+  } else if (sortOrder.value === "desc") {
+    sorted.sort((a, b) => Number(b.price) - Number(a.price));
+  }
+  return sorted;
+});
+
 
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
@@ -182,6 +206,15 @@ const filteredProducts = computed(() => {
     const minOk = !minPrice.value || price >= min;
     const maxOk = !maxPrice.value || price <= max;
 
+    const keyword = searchKeyword.value.trim().toLowerCase();
+    const title = product.title?.toLowerCase() || "";
+    const content = product.content?.toLowerCase() || "";
+    const keywordMatch =
+      keyword === "" ||
+      title.includes(keyword) ||
+      content.includes(keyword);
+
+    return categoryMatch && minOk && maxOk && keywordMatch;
     return categoryMatch && minOk && maxOk;
   });
 });
@@ -236,6 +269,12 @@ async function fetchProducts() {
 function goToDetail(boardId) {
   router.push(`/details/${boardId}`);
 };
+
+function onSearch() {
+  searchKeyword.value = tempKeyword.value;
+  currentPage.value = 1; // 검색 결과가 바뀌었으니 페이지 초기화
+}
+
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {

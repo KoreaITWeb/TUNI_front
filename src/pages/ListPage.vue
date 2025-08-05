@@ -103,37 +103,38 @@
             </div>
           </div>
         </div>
-        <nav class="mt-4" style="display: flex; justify-content: center;">
-          <ul class="pagination">
-            <li
-              class="page-item"
-              :class="{ disabled: currentPage === 1 }"
-              @click="goToPage(currentPage - 1)"
-            >
-              <a class="page-link" style="cursor:pointer;">← Previous</a>
-            </li>
+        <nav aria-label="Page navigation" class="d-flex justify-content-center align-items-center mt-4 gap-3">
+              <button
+                class="btn btn-outline-primary"
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 1"
+              >
+                ← Previous
+              </button>
 
-            <li
-              class="page-item"
-              v-for="page in totalPages"
-              :key="page"
-              :class="{ active: currentPage === page }"
-              @click="goToPage(page)"
-            >
-              <a class="page-link" style="cursor:pointer;">{{ page }}</a>
-            </li>
+              <!-- 입력창 + 총 페이지 -->
+              <div class="d-flex align-items-center gap-2">
+                <input
+                  type="number"
+                  v-model.number="inputPage"
+                  :min="1"
+                  :max="totalPages"
+                  class="form-control"
+                  style="width: 60px; text-align: center;"
+                  @keyup.enter="goToInputPage"
+                />
+                / {{ totalPages }}
+              </div>
 
-            <li
-              class="page-item"
-              :class="{ disabled: currentPage === totalPages }"
-              @click="goToPage(currentPage + 1)"
-            >
-              <a class="page-link" style="cursor:pointer;">Next →</a>
-            </li>
-          </ul>
+              <!-- Next → 버튼 -->
+              <button
+                class="btn btn-outline-primary"
+                @click="goToPage(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+              >
+                Next →
+              </button>
         </nav>
-
-
       </div>
     </div>
   </div>
@@ -164,7 +165,7 @@ const itemsPerPage = 12;
 const sortOrder = ref(""); 
 const tempKeyword = ref(""); 
 const searchKeyword = ref("");
-
+const inputPage = ref(1);
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
@@ -172,8 +173,10 @@ const paginatedProducts = computed(() => {
   return filteredProducts.value.slice(start, end);
 });
 
+
 const totalPages = computed(() => {
-  return Math.ceil(filteredProducts.value.length / itemsPerPage);
+  const total = Math.ceil(filteredProducts.value.length / itemsPerPage);
+  return total > 0 ? total : 1;
 });
 
 // 토큰 관련
@@ -218,13 +221,16 @@ const filteredProducts = computed(() => {
       content.includes(keyword);
 
     return categoryMatch && minOk && maxOk && keywordMatch;
-    return categoryMatch && minOk && maxOk;
   });
 });
 
 // 필터 조건이 변경될 때마다 현재 페이지를 1로 리셋합니다.
 watch([selectedCategories, minPrice, maxPrice], () => {
   currentPage.value = 1;
+});
+
+watch(currentPage, (newPage) => {
+  inputPage.value = newPage;
 });
 
 // 백엔드 API를 호출하여 상품 목록을 가져오는 함수
@@ -278,6 +284,13 @@ function onSearch() {
   currentPage.value = 1; // 검색 결과가 바뀌었으니 페이지 초기화
 }
 
+function goToInputPage() {
+  if (inputPage.value >= 1 && inputPage.value <= totalPages.value) {
+    currentPage.value = inputPage.value;
+  } else {
+    alert(`1부터 ${totalPages.value} 사이의 숫자를 입력해주세요.`);
+  }
+}
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {

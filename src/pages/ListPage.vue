@@ -31,28 +31,27 @@
           >
           <label class="form-check-label" :for="category">{{ category }}</label>
         </div>
-          <label class="form-label mt-3">Price</label>
-          <div class="d-flex gap-2">
-          <input
-            type="number"
-            class="form-control"
-            placeholder="Min"
-            v-model="minPrice"
-          >
-          <span>~</span>
-          <input
-            type="number"
-            class="form-control"
-            placeholder="Max"
-            v-model="maxPrice"
-          >
-        </div>
+        <label class="form-label mt-3">Price</label>
+        <div class="d-flex gap-2">
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Min"
+          v-model="minPrice"
+        >
+        <span>~</span>
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Max"
+          v-model="maxPrice"
+        >
+      </div>
 </div>
 
       <!-- 오른쪽 콘텐츠 영역 -->
       <div class="col-md-9">
         <!-- 검색 & 정렬 -->
-        
         <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
           <div class="input-group w-50">
             <input type="text" class="form-control" placeholder="Search" v-model = "tempKeyword" @keyup.enter="onSearch">
@@ -100,7 +99,7 @@
             <div class="card-body">
               <h6 class="card-title">{{ product.title }}</h6>
               <p class="card-text text-truncate">{{ product.content }}</p> 
-              <p class="card-text fw-bold">{{ product.price }}원</p>
+              <p class="card-text fw-bold">$ {{ product.price }}</p>
             </div>
           </div>
         </div>
@@ -169,7 +168,8 @@ const searchKeyword = ref("");
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
-  return sortedProducts.value.slice(start, start + itemsPerPage);
+  const end = start + itemsPerPage;
+  return filteredProducts.value.slice(start, end);
 });
 
 const totalPages = computed(() => {
@@ -189,6 +189,7 @@ const sortedProducts = computed(() => {
   }
   return sorted;
 });
+
 
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
@@ -217,6 +218,7 @@ const filteredProducts = computed(() => {
       content.includes(keyword);
 
     return categoryMatch && minOk && maxOk && keywordMatch;
+    return categoryMatch && minOk && maxOk;
   });
 });
 
@@ -275,6 +277,7 @@ function onSearch() {
   searchKeyword.value = tempKeyword.value;
   currentPage.value = 1; // 검색 결과가 바뀌었으니 페이지 초기화
 }
+
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {

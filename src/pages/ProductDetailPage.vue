@@ -113,6 +113,7 @@ import { storeToRefs } from 'pinia';
 import api from '@/api';
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs"
+import { useChatStore } from '@/stores/chat';
 const route = useRoute();
 const router = useRouter()
 const productId = ref(null);
@@ -153,11 +154,11 @@ const connectWebSocket = () => {
     stompClient.connect(
       {},
       () => {
-        console.log('WebSocket 연결 성공');
+        // console.log('WebSocket 연결 성공');
         resolve();
       },
       (error) => {
-        console.error("WebSocket 연결 실패:", error);
+        // console.error("WebSocket 연결 실패:", error);
         reject(error);
       }
     );
@@ -170,88 +171,104 @@ const startChat = async () => {
     alert('로그인이 필요합니다.');
     return;
   }
-
+  
   if (isOwner.value) {
     alert('자신의 상품과는 채팅할 수 없습니다.');
     return;
   }
-
+  
   chatLoading.value = true;
-
+  
   try {
     // WebSocket 연결 확인
     await connectWebSocket();
-
-    // 채팅방 생성 데이터 (현재 유저 = buyer, 게시글 작성자 = seller)
+    
+    // 채팅방 생성 데이터
     const chatRoomData = {
-      buyerId: loggedInUserId.value,      // 현재 로그인한 유저 (구매 희망자)
-      sellerId: seller.value,             // 게시글 작성자 (판매자)
-      boardId: parseInt(productId.value)  // 게시글 번호
+      buyerId: loggedInUserId.value,
+      sellerId: seller.value,
+      boardId: parseInt(productId.value)
     };
-
-    console.log('채팅방 생성 요청 데이터:', chatRoomData);
-
-    // 기존 채팅방 확인 (2단계 검색)
-    const existingRoomResponse = await axios.get('http://localhost:8443/api/chat/rooms', {
-      params: { userId: loggedInUserId.value }
+    
+    // console.log('채팅방 생성 요청 데이터:', chatRoomData);
+    
+    // 기존 채팅방 확인
+    const existingRoomResponse = await api.post('/api/chat/rooms', {
+      userId: loggedInUserId.value
     });
-
+    
     // 1단계: 같은 게시글의 채팅방 확인
-    const sameProductRoom = existingRoomResponse.data.find(room => 
-      parseInt(room.boardId) === parseInt(productId.value) && 
-      ((room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
-       (room.sellerId === loggedInUserId.value && room.buyerId === seller.value))
-    );
+    const sameProductRoom = existingRoomResponse.data.find(room => {
+  const isSameBoard = parseInt(room.boardId) === parseInt(productId.value);
+  const isSamePair =
+    (room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
+    (room.sellerId === loggedInUserId.value && room.buyerId === seller.value);
+  const isOpponentPresent = room.buyerId !== null && room.sellerId !== null;
 
-    // 2단계: 같은 seller-buyer 조합의 다른 채팅방 확인 (게시글 상관없이)
-    const samePairRoom = existingRoomResponse.data.find(room => 
-      ((room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
-       (room.sellerId === loggedInUserId.value && room.buyerId === seller.value))
-    );
+  return isSameBoard && isSamePair && isOpponentPresent;
+});
 
+    
+    // 2단계: 같은 seller-buyer 조합의 다른 채팅방 확인
+    const samePairRoom = existingRoomResponse.data.find(room => {
+      const isSamePair =
+      (room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
+      (room.sellerId === loggedInUserId.value && room.buyerId === seller.value);
+    
+      const isOpponentPresent = room.buyerId !== null && room.sellerId !== null;
+      return isSamePair && isOpponentPresent;
+  });
+    
+    // ChatStore 가져오기
+    const chatStore = useChatStore();
+    
     if (sameProductRoom) {
-      // 동일한 게시글의 채팅방이 있으면 해당 채팅방으로 이동
-      console.log('동일 게시글 채팅방 발견:', sameProductRoom);
-      router.push({
-        path: '/chat',
-        query: { 
-          roomId: sameProductRoom.chatId,
-          userId: loggedInUserId.value 
-        }
-      }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
-    } else if (samePairRoom) {
-      // 같은 seller-buyer 조합의 다른 게시글 채팅방이 있으면 해당 채팅방으로 이동
-      console.log('동일 사용자 조합 채팅방 발견 (다른 게시글):', samePairRoom);
-      console.log(`기존 게시글 #${samePairRoom.boardId} → 현재 게시글 #${productId.value}`);
+      // Store에 선택할 채팅방 정보 저장
+      chatStore.setPendingRoom({
+        roomId: sameProductRoom.chatId,
+        userId: loggedInUserId.value
+      });
       
-      // 기존 채팅방으로 이동하되, 현재 게시글 정보도 함께 전달
-      router.push({
-        path: '/chat',
-        query: { 
-          roomId: samePairRoom.chatId,
-          userId: loggedInUserId.value,
-          newBoardId: parseInt(productId.value) // 새로운 게시글 ID 정보 전달
-        }
-      }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
+      // console.log('동일 게시글 채팅방 발견:', sameProductRoom);
+      router.push('/chat').then(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      
+    } else if (samePairRoom) {
+      // Store에 선택할 채팅방 정보 저장
+      chatStore.setPendingRoom({
+        roomId: samePairRoom.chatId,
+        userId: loggedInUserId.value,
+        newBoardId: parseInt(productId.value)
+      });
+      
+      // console.log('동일 사용자 조합 채팅방 발견 (다른 게시글):', samePairRoom);
+      router.push('/chat').then(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      
     } else {
       // 새 채팅방 생성 요청
-      console.log('새 채팅방 생성 요청:', chatRoomData);
+      // console.log('새 채팅방 생성 요청:', chatRoomData);
       stompClient.send("/app/createRoom", {}, JSON.stringify(chatRoomData));
+      
+      // Store에 생성 대기 정보 저장
+      chatStore.setPendingRoom({
+        userId: loggedInUserId.value,
+        boardId: parseInt(productId.value),
+        isNewRoom: true
+      });
       
       // 채팅방 생성 응답 대기 후 채팅 페이지로 이동
       setTimeout(() => {
-        router.push({
-          path: '/chat',
-          query: { 
-            userId: loggedInUserId.value,
-            boardId: parseInt(productId.value)
-          }
-        }).then(() => {window.scrollTo({ top: 0, behavior: 'smooth' });});
+        router.push('/chat').then(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
       }, 1000);
     }
-
+    
   } catch (error) {
-    console.error('채팅방 생성 중 오류:', error);
+    // console.error('채팅방 생성 중 오류:', error);
     alert('채팅방 생성에 실패했습니다. 다시 시도해주세요.');
   } finally {
     chatLoading.value = false;

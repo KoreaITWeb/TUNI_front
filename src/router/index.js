@@ -9,6 +9,10 @@ import SellPage from '@/pages/SellPage.vue'
 import ChatPage from '@/pages/ChatPage.vue'
 
 const routes = [
+  {
+    path: '/', // ✅ 추가된 부분
+    redirect: '/main'
+  },
   { path: '/Chat',
     name: 'chat',
     component: ChatPage

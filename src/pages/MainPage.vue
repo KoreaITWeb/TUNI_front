@@ -6,8 +6,7 @@
         <div class="hero-content">
           <div class="hero-text">
             <h1 class="hero-title">
-              Saheroe transactions<br />
-              <span class="hero-highlight">on University</span>
+              Trade <span class="hero-highlight">University</span>
             </h1>
             <p class="hero-description">
               Start trading with students on the same campus.<br />
@@ -22,18 +21,15 @@
                 Add Product
               </button>
             </div>
+            <!-- ✅ 실시간 통계 표시 -->
             <div class="hero-stats">
               <div class="stat-item">
-                <span class="stat-number">1,234</span>
-                <span class="stat-label">Register Product</span>
+                <span class="stat-number">{{ stats.productCount }}</span>
+                <span class="stat-label">Listed Items</span>
               </div>
               <div class="stat-item">
-                <span class="stat-number">567</span>
-                <span class="stat-label">Number of Students</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">890</span>
-                <span class="stat-label">Completed transactions</span>
+                <span class="stat-number">{{ stats.userCount }}</span>
+                <span class="stat-label">Signed-up Students</span>
               </div>
             </div>
           </div>
@@ -57,36 +53,37 @@
     <!-- Latest Products Section -->
     <section class="products-section">
       <div class="section-container">
-        <div class="section-header">
+        <div class="section-header flex items-center">
           <h2 class="section-title">Recent Register Products</h2>
-          <button class="btn-text" @click="handleViewMore">
-            View more <ChevronRight class="btn-icon" />
+          <button 
+            class="btn-text ml-auto flex items-center gap-1 flex-nowrap" 
+            @click="handleViewMore"
+          >
+            <span>View more</span>
+            <ChevronRight class="btn-icon" />
           </button>
+
         </div>
         <div class="products-grid">
           <div
             v-for="product in latestProducts"
-            :key="product.id"
+            :key="product.boardId"
             class="product-card"
-          >
+            @click="goToDetail(product.boardId)" >
             <div class="product-image-container">
               <img
-                :src="product.image"
+                :src="product.thumbnailUrl || '../../placeholder.svg'"
                 :alt="product.title"
                 class="product-image"
               />
-              <button class="wishlist-btn">
-                <Heart class="heart-icon" />
-              </button>
             </div>
             <div class="product-info">
               <h3 class="product-title">{{ product.title }}</h3>
               <p class="product-price">
-                {{ product.price.toLocaleString() }}$
+                {{ product.price.toLocaleString() }}원
               </p>
               <div class="product-meta">
-                <span class="product-location">{{ product.location }}</span>
-                <span class="product-time">{{ product.timeAgo }}</span>
+                <span v-if="!isLogin" class="product-location">{{ product.schoolName }}</span>
               </div>
             </div>
           </div>
@@ -94,135 +91,93 @@
       </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="features-section">
-      <div class="section-container">
-        <h2 class="section-title">Why TUNI use?</h2>
-        <div class="features-grid">
-          <div
-            v-for="feature in features"
-            :key="feature.id"
-            class="feature-card"
-          >
-            <div class="feature-icon">
-              <component :is="feature.icon" class="icon" />
-            </div>
-            <h3 class="feature-title">{{ feature.title }}</h3>
-            <p class="feature-description">{{ feature.description }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-
+import api from '@/api';
 import '@/assets/styles/pages/Mainpage.css'
 import logoTuni from '@/assets/logo-tuni.png'
+import { storeToRefs } from 'pinia';
 
 import {
   Search,
   Plus,
-  ChevronRight,
-  Heart,
-  Shield,
-  Users,
-  Clock,
-  CheckCircle
+  ChevronRight
 } from 'lucide-vue-next'
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
+const { isLogin } = storeToRefs(authStore);
 
+// --- 로그인 확인 및 라우팅 함수 ---
 function handleGoShop() {
-  if (!authStore.isLogin) {
-    alert('로그인 후 이용 가능합니다.')
-    return
+  if (!isLogin.value) {
+    alert('로그인 후 이용 가능합니다.');
+    router.push('/login');
+    return;
   }
-  router.push('/Shop')
+  router.push('/shop');
 }
 
 function handleAddProduct() {
-  if (!authStore.isLogin) {
-    alert('로그인 후 이용 가능합니다.')
+  if (!isLogin.value) {
+    alert('로그인 후 이용 가능합니다.');
     return
   }
-  router.push('/Sell')
+  router.push('/Sell');
 }
 
 function handleViewMore() {
-  if (!authStore.isLogin) {
-    alert('로그인 후 이용 가능합니다.')
+  if (!isLogin.value) {
+    alert('로그인 후 이용 가능합니다.');
     return
   }
-  router.push('/Shop')
+  router.push('/Shop');
 }
 
-const latestProducts = reactive([
-  {
-    id: 1,
-    title: 'MacBook Pro 13 M1',
-    price: 1200000,
-    image: '/placeholder.svg?height=200&width=200',
-    location: 'Haverd.Univ',
-    timeAgo: '2min ago'
-  },
-  {
-    id: 2,
-    title: 'I-Pad Air 5th',
-    price: 650000,
-    image: '/placeholder.svg?height=200&width=200',
-    location: '...Univ',
-    timeAgo: '15min ago'
-  },
-  {
-    id: 3,
-    title: 'AirPot Pro 2th',
-    price: 180000,
-    image: '/placeholder.svg?height=200&width=200',
-    location: '...Univ',
-    timeAgo: '1H ago'
-  },
-  {
-    id: 4,
-    title: 'IPhone 13 Pro',
-    price: 1500000,
-    image: '/placeholder.svg?height=200&width=200',
-    location: '...Univ',
-    timeAgo: '2H ago'
-  }
-])
+// ✅ 실시간 등록 상품 수 / 사용자 수
+const stats = reactive({
+  productCount: 0,
+  userCount: 0
+})
 
-const features = reactive([
-  {
-    id: 1,
-    title: 'Student Authentication System',
-    description: 'Student ID authentication enables safer transactions',
-    icon: Shield
-  },
-  {
-    id: 2,
-    title: 'Meeting at University',
-    description:
-      'You can also make friends within your school through meetings within your university.',
-    icon: Users
-  },
-  {
-    id: 3,
-    title: 'Quick Transactions',
-    description: 'Fast and efficient trading possible.',
-    icon: Clock
-  },
-  {
-    id: 4,
-    title: 'Reliability System',
-    description:
-      'Find a trustworthy trading partner with our trading reviews and rating system.',
-    icon: CheckCircle
+onMounted(async () => {
+  try {
+  const res = await api.get('/api/main/counts') // ✅ 백엔드 경로와 맞춰줌
+    stats.productCount = res.data.productCount
+    stats.userCount = res.data.userCount
+  } catch (err) {
+    console.error('실시간 통계 불러오기 실패:', err)
   }
-])
+})
+
+const latestProducts = ref([]);
+
+async function fetchLatestProducts() {
+  try {
+    // isLogin 상태에 따라 알아서 올바른 API가 호출됨
+    const response = await api.get('/board/latest');
+    latestProducts.value = response.data;
+    console.log(latestProducts);
+  } catch (err) {
+    console.error('최신 상품 로딩 실패:', err);
+  }
+}
+
+// --- 이벤트 핸들러 ---
+function goToDetail(productId) {
+  if (!isLogin.value) {
+    alert('로그인이 필요한 기능입니다.');
+    return;
+  }
+  router.push(`/details/${productId}`);
+}
+
+onMounted(() => {
+  fetchLatestProducts();
+});
 </script>

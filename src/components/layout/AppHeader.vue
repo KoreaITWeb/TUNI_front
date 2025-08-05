@@ -1,10 +1,11 @@
 <template>
-  <header class="header">
-    <div class="header-container">
-      <div class="header-content">
-        <router-link to="/main" class="logo">
-          <img src="/logo-icon.svg" alt="TUNI 아이콘" class="logo-icon" />
-          <span class="logo-text">TUNI</span>
+  <header class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- 로고 -->
+        <router-link to="/main" class="flex items-center space-x-2">
+          <img :src="logoTuni" alt="TUNI 아이콘" class="h-8 w-8" />
+          <span class="text-xl font-bold text-gray-800">TUNI</span>
         </router-link>
         
         <nav class="navbar">
@@ -30,23 +31,24 @@
           </ul>
         </nav>
         
-        <div class="header-actions">
-          <button class="icon-button">
-            <Bell class="icon" />
+        <!-- 우측 아이콘 + 로그인 -->
+        <div class="flex items-center space-x-4">
+          <button class="p-2 hover:bg-gray-100 rounded-full">
+            <Bell class="w-5 h-5 text-gray-700" />
           </button>
-          <button class="icon-button">
-            <Settings class="icon" />
+          <button class="p-2 hover:bg-gray-100 rounded-full">
+            <Settings class="w-5 h-5 text-gray-700" />
           </button>
-        </div>
-        
-        <div class="right">
-          <template v-if="authStore.isLogin">
-            <span class="nickname">{{ authStore.userId }}님</span>
-            <button @click="logout">Logout</button>
-          </template>
-          <template v-else>
-            <button @click="goToLogin">Login</button>
-          </template>
+
+          <div>
+            <template v-if="authStore.isLogin">
+              <span class="text-sm font-medium text-gray-800 mr-2">{{ authStore.userId }}님</span>
+              <button @click="logout" class="text-sm text-red-500 hover:underline">Logout</button>
+            </template>
+            <template v-else>
+              <button @click="goToLogin" class="text-sm text-blue-600 hover:underline">Login</button>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -54,6 +56,7 @@
 </template>
 
 <script setup>
+import logoTuni from '@/assets/logo-tuni.png'
 import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -92,29 +95,25 @@ onMounted(() => {
 function goToShop() {
   router.push('/Shop')
 }
-
 function goToSell() {
   router.push('/Sell')
 }
-
 function goToChat() {
   router.push('/Chat')
 }
-
 function goToProfile() {
   router.push('/Profile')
 }
-
 function goToLogin() {
   router.push('/Login')
 }
-
 function logout() {
   // WebSocket 연결 해제
   chatStore.disconnectGlobalWebSocket()
   
   authStore.logout()
   alert('로그아웃되었습니다.')
+  router.push('/login')
   router.push('/login')
 }
 </script>

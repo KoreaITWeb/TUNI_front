@@ -4,7 +4,7 @@
       <div class="flex justify-between items-center h-16">
         <!-- 로고 -->
         <router-link to="/main" class="flex items-center space-x-2">
-          <img :src="logoTuni" alt="TUNI 아이콘" class="h-8 w-8" />
+          <img :src="logoTuni" alt="TUNI 아이콘" class="h-20 w-auto sm:h-16" />
           <span class="text-xl font-bold text-gray-800">TUNI</span>
         </router-link>
         
@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import logoTuni from '@/assets/logo-tuni.png'
+import logoTuni from '@/assets/logo-tuni-icon.png'
 import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'

@@ -36,14 +36,12 @@
 
           <!-- Hero 이미지 카드 -->
           <div class="mt-10 lg:mt-0">
-            <div
-              class="w-[240px] h-[360px] bg-transparent rounded-2xl shadow-xl transform rotate-[4deg] flex items-center justify-center"
-            >
+            <div class="flex items-center justify-center">
               <img
                 :src="logoTuni"
                 alt="대학생 중고거래 로고"
-                class="h-full object-contain rounded-2xl p-4"
-              />
+                class="w-[220px] object-contain"
+                />
             </div>
           </div>
         </div>

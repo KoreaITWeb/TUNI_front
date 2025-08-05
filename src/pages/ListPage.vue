@@ -169,9 +169,6 @@ const { isLogin, userId, schoolId } = storeToRefs(authStore);
 
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
-    console.log(`--- Checking Product ID: ${product.boardId} ---`);
-    console.log(`DB Category: "${product.category}" vs Selected:`, selectedCategories.value);
-    console.log(`DB Price: "${product.price}" vs Filter Range: ${minPrice.value}-${maxPrice.value}`);
     
     // 카테고리 조건
     const categoryMatch =

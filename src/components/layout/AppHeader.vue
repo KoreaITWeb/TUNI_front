@@ -75,10 +75,10 @@ watch(
   () => authStore.userId,
   async (newUserId) => {
     if (newUserId && !chatStore.isConnected) {
-      console.log('🔍 Header - 사용자 로그인, WebSocket 연결 시작')
+      // console.log('🔍 Header - 사용자 로그인, WebSocket 연결 시작')
       chatStore.connectGlobalWebSocket(newUserId)
     } else if (!newUserId && chatStore.isConnected) {
-      console.log('🔍 Header - 사용자 로그아웃, WebSocket 연결 해제')
+      // console.log('🔍 Header - 사용자 로그아웃, WebSocket 연결 해제')
       chatStore.disconnectGlobalWebSocket()
     }
   },

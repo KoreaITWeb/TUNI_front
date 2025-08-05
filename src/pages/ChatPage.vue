@@ -20,6 +20,7 @@
           :messages="messages"
           :currentUserId="currentUserId"
           :isConnected="isConnected"
+          :title="title"
           @sendMessage="sendMessage"
           @quitRoom="quitChatRoom"
         />
@@ -72,6 +73,7 @@ const currentUserId = computed(() => chatStore.currentUserId || authStore.userId
 const isConnected = computed(() => chatStore.isConnected)
 const chatRooms = computed(() => chatStore.chatRooms)
 const lastMessages = computed(() => chatStore.lastMessages)
+const title = computed(() => chatStore.title)
 chatStore.chatRooms.forEach(room => {
   // console.log(`Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
 })
@@ -464,7 +466,6 @@ const handleNewMessageEvent = (event) => {
 const handleCheckCurrentRoom = (event) => {
   const { chatId } = event.detail
   const isCurrentRoom = selectedRoom.value && selectedRoom.value.chatId === chatId
-  
   // 응답 이벤트 발생
   const responseEvent = new CustomEvent('currentRoomResponse', {
     detail: { isCurrentRoom }

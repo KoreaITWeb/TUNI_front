@@ -187,7 +187,8 @@ const startChat = async () => {
     const chatRoomData = {
       buyerId: loggedInUserId.value,
       sellerId: seller.value,
-      boardId: parseInt(productId.value)
+      boardId: parseInt(productId.value),
+      // title: product.title.value
     };
     
     // console.log('채팅방 생성 요청 데이터:', chatRoomData);
@@ -226,7 +227,8 @@ const startChat = async () => {
       // Store에 선택할 채팅방 정보 저장
       chatStore.setPendingRoom({
         roomId: sameProductRoom.chatId,
-        userId: loggedInUserId.value
+        userId: loggedInUserId.value,
+        title: product.value
       });
       
       // console.log('동일 게시글 채팅방 발견:', sameProductRoom);
@@ -239,7 +241,8 @@ const startChat = async () => {
       chatStore.setPendingRoom({
         roomId: samePairRoom.chatId,
         userId: loggedInUserId.value,
-        newBoardId: parseInt(productId.value)
+        newBoardId: parseInt(productId.value),
+        title: product.value
       });
       
       // console.log('동일 사용자 조합 채팅방 발견 (다른 게시글):', samePairRoom);
@@ -256,7 +259,8 @@ const startChat = async () => {
       chatStore.setPendingRoom({
         userId: loggedInUserId.value,
         boardId: parseInt(productId.value),
-        isNewRoom: true
+        isNewRoom: true,
+        title: product.value
       });
       
       // 채팅방 생성 응답 대기 후 채팅 페이지로 이동
@@ -297,7 +301,7 @@ async function deleteProduct() {
       alert('상품이 삭제되었습니다.');
       router.push('/shop'); // 삭제 후 목록 페이지로 이동
     } catch (err) {
-      console.error('상품 삭제 실패:', err);
+      // console.error('상품 삭제 실패:', err);
       alert('상품 삭제에 실패했습니다.');
     }
   }
@@ -317,7 +321,7 @@ async function fetchProductDetails(id) {
           boardId: productId.value
         });
       } catch (viewError) {
-        console.warn('조회수 추적 실패:', viewError);
+        // console.warn('조회수 추적 실패:', viewError);
         // 조회수 추적 실패해도 상품 정보는 계속 로드
       }
     const response = await api.get(`/board/${id}`, {

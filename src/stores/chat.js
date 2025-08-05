@@ -5,6 +5,7 @@ import SockJS from "sockjs-client"
 import { Stomp } from "@stomp/stompjs"
 import api from '@/api'
 
+
 // 로컬스토리지에 unreadCount 저장/불러오기
 const UnreadCountStorage = {
   getKey(userId) {
@@ -51,6 +52,8 @@ export const useChatStore = defineStore('chat', () => {
   const totalUnreadCount = ref(0)
   const currentViewingRoomId = ref(null)
   const isInitialLoadComplete = ref(false)
+  const title = ref('good')
+  // const title =ref('')
   
   // WebSocket 관련
   let stompClient = null
@@ -173,8 +176,9 @@ export const useChatStore = defineStore('chat', () => {
     currentUserId.value = userId
 
     const socket = new SockJS("http://localhost:8443/ws-chat")
+    
     stompClient = Stomp.over(socket)
-
+    stompClient.debug = () => {}
     stompClient.connect(
       {},
       () => {
@@ -194,11 +198,11 @@ export const useChatStore = defineStore('chat', () => {
         // console.error("🔍 전역 WebSocket 연결 실패:", error)
         isConnected.value = false
         
-        // // 재연결 시도
-        // setTimeout(() => {
-        //   stompClient = null
-        //   connectGlobalWebSocket(userId)
-        // }, 5000)
+        // 재연결 시도
+        setTimeout(() => {
+          stompClient = null
+          connectGlobalWebSocket(userId)
+        }, 5000)
       }
     )
   }

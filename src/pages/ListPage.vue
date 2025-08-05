@@ -90,7 +90,7 @@
             <div class="card-body">
               <h6 class="card-title">{{ product.title }}</h6>
               <p class="card-text text-truncate">{{ product.content }}</p> 
-              <p class="card-text fw-bold">{{ product.price }}원</p>
+              <p class="card-text fw-bold">$ {{ product.price }}</p>
             </div>
           </div>
         </div>

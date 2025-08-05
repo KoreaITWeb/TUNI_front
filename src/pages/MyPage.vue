@@ -223,22 +223,35 @@ async function loadWishlist(userId) {
   }
 }
 
+// 예: 판매중, 판매완료 상태별 카운트 업데이트 함수
+function updateSaleStatusStats() {
+  stats.selling = myProducts.value.filter(p => p.saleStatus === 'SALE').length;
+  stats.sold = myProducts.value.filter(p => p.saleStatus === 'SOLD').length;
+}
+
 // 내가 등록한 상품 및 user 정보, stats.selling 업데이트 함수
 async function loadMyPageData(userId) {
   try {
     const res = await api.get(`/api/mypage/${userId}`)
+    console.log(res.data.saleCount);  // 판매중
+    console.log(res.data.soldCount)
     console.log('API 응답 데이터:', res.data)
     console.log('내 상품 목록:', res.data.productList)
     myProducts.value = res.data.productList || []
+    // 상태별 카운트 업데이트
+    updateSaleStatusStats();
     console.log('상품 리스트 길이:', (res.data.productList || []).length)
+    console.log("상품 saleStatus 상태 확인:");
     myProducts.value.forEach((p, i) => {
-      console.log(`상품[${i}]`, p)
-    })
+      console.log(`상품[${i}] saleStatus:`, p.saleStatus);
+      console.log(`상품[${i}] 전체:`, JSON.parse(JSON.stringify(p)));
+    });
     user.name = res.data.user.userId
     user.schoolname = res.data.university.name
     
     console.log('첫 번째 상품 상세:', res.data.productList[0])
-    stats.selling = myProducts.value.length
+    //stats.selling = myProducts.value.length
+    
 
     console.log('판매중 상품 개수:', stats.selling)
     console.log('상품 목록:', myProducts.value)

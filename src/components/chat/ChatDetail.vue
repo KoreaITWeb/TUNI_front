@@ -61,14 +61,20 @@
     </div>
 
     <!-- 입력창 -->
+     <div v-if="room.isOtherUserLeft" class="chat-disabled-notice">
+      상대방이 채팅방을 나갔습니다.
+    </div>
+    <div v-else class="message-input">
     <div class="p-3 border-top d-flex">
       <input 
         type="text" 
         class="form-control me-2" 
         v-model="message" 
         @keyup.enter="sendMessage" 
+        @click="handleClick"
         placeholder="메시지를 입력하세요..."
         :disabled="!props.isConnected"
+        id="selectInput"
       />
       <button 
         class="btn btn-primary" 
@@ -77,6 +83,7 @@
       >
         전송
       </button>
+    </div>
     </div>
   </div>
 
@@ -92,6 +99,8 @@
 
 <script setup>
 import { ref, computed ,watch, nextTick } from 'vue'
+import { useChatStore } from '@/stores/chat'
+const chatStore = useChatStore()
 
 const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected'])
 
@@ -133,12 +142,18 @@ watch(() => props.room, (newRoom) => {
 }, { immediate: true })
 
 const handleQuitRoom = () => {
+  
   if (confirm(`정말로 "${getOtherUserName()}"님과의 채팅방을 나가시겠습니까?\n\n나간 후에는 대화 내역을 볼 수 없습니다.`)) {
     emit('quitRoom')
   }
 }
 
+function handleClick(){
+  chatStore.markRoomAsRead(props.room.chatId)
+}
+
 const sendMessage = () => {
+  
   if (!message.value.trim()) return
   
   const messageData = {
@@ -153,7 +168,11 @@ const sendMessage = () => {
 
 const getOtherUserName = () => {
   if (!props.room) return ''
-  return props.room.buyerId === props.currentUserId ? props.room.sellerId : props.room.buyerId
+  const tempName =  props.room.buyerId === props.currentUserId ? props.room.sellerId : props.room.buyerId
+  if (tempName == null){
+    return "(알 수 없음)"
+  }
+  return tempName
 }
 
 const formatDate = (isoStr) => {
@@ -179,6 +198,11 @@ watch(() => props.messages, () => {
 watch(() => props.room, () => {
   scrollChatToBottom()
 })
+
+const getMessageClass = (msg) => {
+  if (msg.userId === 'system') return 'system-message-wrapper'
+  return msg.userId === currentUserId ? 'message-my' : 'message-other'
+}
 </script>
 
 <style scoped>
@@ -279,5 +303,23 @@ watch(() => props.room, () => {
   border-right: 0.3em solid transparent;
   border-bottom: 0;
   border-left: 0.3em solid transparent;
+}
+
+.system-message {
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin: 20px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 20px;
+}
+
+.chat-disabled-notice {
+  text-align: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border-top: 1px solid #dee2e6;
 }
 </style>

@@ -6,8 +6,7 @@
         <div class="hero-content">
           <div class="hero-text">
             <h1 class="hero-title">
-              Saheroe transactions<br />
-              <span class="hero-highlight">on University</span>
+              Trade <span class="hero-highlight">University</span>
             </h1>
             <p class="hero-description">
               Start trading with students on the same campus.<br />
@@ -22,18 +21,15 @@
                 Add Product
               </button>
             </div>
+            <!-- ✅ 실시간 통계 표시 -->
             <div class="hero-stats">
               <div class="stat-item">
-                <span class="stat-number">1,234</span>
-                <span class="stat-label">Register Product</span>
+                <span class="stat-number">{{ stats.productCount }}</span>
+                <span class="stat-label">Listed Items</span>
               </div>
               <div class="stat-item">
-                <span class="stat-number">567</span>
-                <span class="stat-label">Number of Students</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">890</span>
-                <span class="stat-label">Completed transactions</span>
+                <span class="stat-number">{{ stats.userCount }}</span>
+                <span class="stat-label">Signed-up Students</span>
               </div>
             </div>
           </div>
@@ -117,9 +113,10 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import axios from 'axios'
 
 import '@/assets/styles/pages/Mainpage.css'
 import logoTuni from '@/assets/logo-tuni.png'
@@ -161,6 +158,22 @@ function handleViewMore() {
   }
   router.push('/Shop')
 }
+
+// ✅ 실시간 등록 상품 수 / 사용자 수
+const stats = reactive({
+  productCount: 0,
+  userCount: 0
+})
+
+onMounted(async () => {
+  try {
+  const res = await axios.get('/api/main/counts') // ✅ 백엔드 경로와 맞춰줌
+    stats.productCount = res.data.productCount
+    stats.userCount = res.data.userCount
+  } catch (err) {
+    console.error('실시간 통계 불러오기 실패:', err)
+  }
+})
 
 const latestProducts = reactive([
   {

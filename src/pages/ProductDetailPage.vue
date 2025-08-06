@@ -95,7 +95,7 @@
                   class="flex-1 btn btn-dark py-2 px-4"
                   :disabled="chatLoading"
                 >
-                  {{ chatLoading ? '채팅방 생성 중...' : '채팅하기' }}
+                  {{ chatLoading ? 'Making ChatRoom...' : 'Chat with Seller' }}
                 </button>
             </template>
           </div>
@@ -166,6 +166,7 @@ const connectWebSocket = () => {
 };
 
 // 채팅하기 버튼 클릭 시 실행
+// 채팅하기 버튼 클릭 시 실행
 const startChat = async () => {
   if (!loggedInUserId.value) {
     alert('Please log in to continue.');
@@ -185,94 +186,131 @@ const startChat = async () => {
     
     // 채팅방 생성 데이터
     const chatRoomData = {
-      buyerId: loggedInUserId.value,
-      sellerId: seller.value,
-      boardId: parseInt(productId.value),
-      // title: product.title.value
+      buyerId: loggedInUserId.value,      // 현재 사용자가 구매자
+      sellerId: seller.value,              // 게시글 작성자가 판매자
+      boardId: parseInt(productId.value)
     };
     
-    // console.log('채팅방 생성 요청 데이터:', chatRoomData);
+    console.log('채팅방 생성 요청 데이터:', chatRoomData);
     
     // 기존 채팅방 확인
     const existingRoomResponse = await api.post('/api/chat/rooms', {
       userId: loggedInUserId.value
     });
     
-    // 1단계: 같은 게시글의 채팅방 확인
-    const sameProductRoom = existingRoomResponse.data.find(room => {
-  const isSameBoard = parseInt(room.boardId) === parseInt(productId.value);
-  const isSamePair =
-    (room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
-    (room.sellerId === loggedInUserId.value && room.buyerId === seller.value);
-  const isOpponentPresent = room.buyerId !== null && room.sellerId !== null;
-
-  return isSameBoard && isSamePair && isOpponentPresent;
-});
-
-    
-    // 2단계: 같은 seller-buyer 조합의 다른 채팅방 확인
-    const samePairRoom = existingRoomResponse.data.find(room => {
-      const isSamePair =
-      (room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
-      (room.sellerId === loggedInUserId.value && room.buyerId === seller.value);
-    
+    // 1단계: 완전히 동일한 채팅방 확인 (같은 게시글 + 같은 역할)
+    const exactSameRoom = existingRoomResponse.data.find(room => {
+      const isSameBoard = parseInt(room.boardId) === parseInt(productId.value);
+      
+      // 현재 요청과 완전히 동일한 역할 구성인지 확인
+      // 현재: loggedInUser가 buyer, seller.value가 seller
+      const isSameRoleConfig = 
+        room.buyerId === loggedInUserId.value && 
+        room.sellerId === seller.value;
+      
       const isOpponentPresent = room.buyerId !== null && room.sellerId !== null;
-      return isSamePair && isOpponentPresent;
-  });
+      
+      return isSameBoard && isSameRoleConfig && isOpponentPresent;
+    });
+    
+    // // 2단계: 역할이 바뀐 채팅방 확인 (같은 게시글 + 역할 swap)
+    // const swappedRoleRoom = existingRoomResponse.data.find(room => {
+    //   const isSameBoard = parseInt(room.boardId) === parseInt(productId.value);
+      
+    //   // 역할이 바뀐 경우: loggedInUser가 seller이고, seller.value가 buyer
+    //   const isSwappedRole = 
+    //     room.sellerId === loggedInUserId.value && 
+    //     room.buyerId === seller.value;
+      
+    //   const isOpponentPresent = room.buyerId !== null && room.sellerId !== null;
+      
+    //   return isSameBoard && isSwappedRole && isOpponentPresent;
+    // });
     
     // ChatStore 가져오기
     const chatStore = useChatStore();
     
-    if (sameProductRoom) {
-      // Store에 선택할 채팅방 정보 저장
+    if (exactSameRoom) {
+      // 완전히 동일한 채팅방이 있으면 해당 채팅방으로 이동
+      console.log('동일한 역할의 채팅방 발견:', exactSameRoom);
+      
       chatStore.setPendingRoom({
-        roomId: sameProductRoom.chatId,
-        userId: loggedInUserId.value,
-        title: product.value
+        roomId: exactSameRoom.chatId,
+        userId: loggedInUserId.value
       });
       
-      // console.log('동일 게시글 채팅방 발견:', sameProductRoom);
       router.push('/chat').then(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
+    
+    // } else if (swappedRoleRoom) {
+    //   // 역할이 바뀐 채팅방이 있어도 같은 게시글이면 해당 채팅방으로 이동
+    //   console.log('역할이 바뀐 채팅방 발견 (같은 게시글):', swappedRoleRoom);
       
-    } else if (samePairRoom) {
-      // Store에 선택할 채팅방 정보 저장
-      chatStore.setPendingRoom({
-        roomId: samePairRoom.chatId,
-        userId: loggedInUserId.value,
-        newBoardId: parseInt(productId.value),
-        title: product.value
-      });
+    //   chatStore.setPendingRoom({
+    //     roomId: swappedRoleRoom.chatId,
+    //     userId: loggedInUserId.value
+    //   });
       
-      // console.log('동일 사용자 조합 채팅방 발견 (다른 게시글):', samePairRoom);
-      router.push('/chat').then(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+    //   router.push('/chat').then(() => {
+    //     window.scrollTo({ top: 0, behavior: 'smooth' });
+    //   });
       
     } else {
-      // 새 채팅방 생성 요청
-      // console.log('새 채팅방 생성 요청:', chatRoomData);
-      stompClient.send("/app/createRoom", {}, JSON.stringify(chatRoomData));
+      // 3단계: 다른 게시글에서 같은 사용자 조합 확인
+      // const otherBoardSamePairRoom = existingRoomResponse.data.find(room => {
+      //   const isDifferentBoard = parseInt(room.boardId) !== parseInt(productId.value);
+        
+      //   // 같은 사용자 조합인지 확인 (역할 무관)
+      //   const isSamePair = 
+      //     (room.buyerId === loggedInUserId.value && room.sellerId === seller.value) ||
+      //     (room.sellerId === loggedInUserId.value && room.buyerId === seller.value);
+        
+      //   const isOpponentPresent = room.buyerId !== null && room.sellerId !== null;
+        
+      //   return isDifferentBoard && isSamePair && isOpponentPresent;
+      // });
       
-      // Store에 생성 대기 정보 저장
-      chatStore.setPendingRoom({
-        userId: loggedInUserId.value,
-        boardId: parseInt(productId.value),
-        isNewRoom: true,
-        title: product.value
-      });
-      
-      // 채팅방 생성 응답 대기 후 채팅 페이지로 이동
-      setTimeout(() => {
-        router.push('/chat').then(() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+      // if (otherBoardSamePairRoom) {
+      //   // 다른 게시글의 채팅방이 있으면 해당 채팅방으로 이동
+      //   console.log('다른 게시글의 채팅방 발견:', otherBoardSamePairRoom);
+      //   console.log(`기존 게시글 #${otherBoardSamePairRoom.boardId} → 현재 게시글 #${productId.value}`);
+        
+      //   chatStore.setPendingRoom({
+      //     roomId: otherBoardSamePairRoom.chatId,
+      //     userId: loggedInUserId.value,
+      //     newBoardId: parseInt(productId.value)
+      //   });
+        
+      //   router.push('/chat').then(() => {
+      //     window.scrollTo({ top: 0, behavior: 'smooth' });
+      //   });
+        
+      // } else {
+        // 새 채팅방 생성
+        console.log('새 채팅방 생성 요청:', chatRoomData);
+        console.log('역할이 다른 새로운 거래를 위한 채팅방 생성');
+        
+        stompClient.send("/app/createRoom", {}, JSON.stringify(chatRoomData));
+        
+        // Store에 생성 대기 정보 저장
+        chatStore.setPendingRoom({
+          userId: loggedInUserId.value,
+          boardId: parseInt(productId.value),
+          isNewRoom: true
         });
-      }, 1000);
+        
+        // 채팅방 생성 응답 대기 후 채팅 페이지로 이동
+        setTimeout(() => {
+          router.push('/chat').then(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        }, 1000);
+      // }
     }
     
   } catch (error) {
-    // console.error('채팅방 생성 중 오류:', error);
+    console.error('채팅방 생성 중 오류:', error);
     alert('Failed to create chat room.');
   } finally {
     chatLoading.value = false;

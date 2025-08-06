@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h5 class="p-3">💬 채팅 목록</h5>
+    <h5 class="p-3">💬 Chat List</h5>
     
     <!-- 연결 상태 표시 -->
     <div class="p-3 border-bottom">
@@ -12,7 +12,7 @@
             style="width: 8px; height: 8px;"
           ></div>
           <small class="text-muted">
-            {{ props.isConnected ? '실시간 연결됨' : '연결 중...' }}
+            {{ props.isConnected ? 'Connected' : 'Waiting...' }}
           </small>
         </div>
         <small class="text-muted">{{ props.currentUserId }}</small>
@@ -22,7 +22,7 @@
     <!-- 채팅방 목록 -->
     <ul class="list-group list-group-flush">
       <li v-if="props.chatRooms.length === 0 && props.currentUserId" class="text-center text-muted p-4">
-        참여 중인 채팅방이 없습니다.
+        Make your ChatRooms!
       </li>
       
       <li
@@ -45,13 +45,13 @@
           <div class="fw-bold">
             {{ getOtherUserName(room) }}
             <span v-if="room.isNew" class="badge bg-primary ms-2">NEW</span>
-            <span v-if="room.isOtherUserLeft" class="badge bg-secondary ms-2">나감</span>
+            <span v-if="room.isOtherUserLeft" class="badge bg-secondary ms-2">Quit</span>
           </div>
           <div v-if="room.lastMessage" class="text-muted small text-truncate">
             {{ room.lastMessage }}
           </div>
           <div v-else class="text-muted small text-truncate">
-            대화를 시작해보세요
+            Start Your Chat!!
           </div>
         </div>
 
@@ -73,7 +73,8 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
-import ko from 'date-fns/locale/ko'
+import enUS from 'date-fns/locale/en-US'
+
 
 const props = defineProps(['chatRooms', 'currentUserId', 'isConnected'])
 
@@ -101,6 +102,7 @@ const getOtherUserName = (room) => {
 
 const getOtherUserInitial = (room) => {
   const otherUser = getOtherUserName(room)
+    // console.log(room)
   return otherUser ? otherUser.charAt(0).toUpperCase() : '?'
 }
 
@@ -110,7 +112,7 @@ function formatTimeAgo(timeString) {
   try {
     return formatDistanceToNow(new Date(timeString), {
       addSuffix: true,
-      locale: ko,
+      locale: enUS,
     })
   } catch (error) {
     // console.error('시간 포맷팅 오류:', error)

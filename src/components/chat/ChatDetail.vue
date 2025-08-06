@@ -1,19 +1,40 @@
 <template>
   <div v-if="props.room" class="flex-grow-1 d-flex flex-column">
     <!-- 채팅 헤더 -->
-    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-      <div>
-        <h6 class="mb-0">{{ getOtherUserName() }}</h6>
-        <small class="text-muted">{{ props.title }}</small>
+    <div class="p-3 border-bottom">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <h6 class="mb-0">{{ getOtherUserName() }}</h6>
+        </div>
+        <button 
+          class="btn btn-outline-danger btn-sm" 
+          type="button"
+          @click="handleQuitRoom"
+          title="Quit Chat"
+        >
+          <i class="bi bi-box-arrow-left me-2"></i>Quit Chat
+        </button>
       </div>
-      <button 
-        class="btn btn-outline-danger btn-sm" 
-        type="button"
-        @click="handleQuitRoom"
-        title="채팅방 나가기"
-      >
-        <i class="bi bi-box-arrow-left me-2"></i>채팅방 나가기
-      </button>
+      
+      <!-- 게시글 정보 표시 -->
+      <div v-if="productInfo.title" class="product-info-box mt-2">
+        <div class="d-flex align-items-center">
+          <img 
+            v-if="productInfo.mainImage" 
+            :src="productInfo.mainImage" 
+            alt="product img"
+            class="product-thumbnail me-3"
+            @error="handleImageError"
+          >
+          <div class="product-placeholder me-3" v-else>
+            <i class="bi bi-image"></i>
+          </div>
+          <div>
+            <h6 class="mb-1 text-truncate" style="max-width: 300px;">{{ productInfo.title }}</h6>
+            <small class="text-muted">$ {{ productInfo.price }}</small>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 채팅 내용 (스크롤 영역) -->
@@ -23,22 +44,27 @@
       style="display: flex; flex-direction: column; min-height: 400px; max-height: 500px;"
     >
       <div v-if="props.messages.length === 0" class="text-center text-muted mt-5">
-        아직 메시지가 없습니다. 첫 메시지를 보내보세요!
+        No Messages.
       </div>
       
       <div
         v-for="(msg, index) in props.messages" 
-        :key="index"
+        :key="`${msg.chatId}-${msg.regdate}-${index}`"
         class="mb-2"
-        :class="msg.userId === props.currentUserId ? 'text-end' : 'text-start'"
+        :class="getMessageClass(msg)"
       >
+        <!-- 시스템 메시지 -->
+        <div v-if="msg.userId === 'system'" class="system-message">
+          {{ msg.content }}
+        </div>
+        
         <!-- 다른 사용자 메시지 -->
-        <div v-if="msg.userId !== props.currentUserId" class="d-flex">
+        <div v-else-if="msg.userId !== props.currentUserId" class="d-flex">
           <div 
             class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" 
-            style="width: 32px; height: 32px; font-size: 12px;"
+            style="width: 32px; height: 32px; font-size: 12px; flex-shrink: 0;"
           >
-            {{ msg.userId.charAt(0).toUpperCase() }}
+            {{ msg.userId ? msg.userId.charAt(0).toUpperCase() : '?' }}
           </div>
           <div>
             <div class="bg-white border rounded p-2 shadow-sm" style="max-width: 300px;">
@@ -61,29 +87,26 @@
     </div>
 
     <!-- 입력창 -->
-     <div v-if="room.isOtherUserLeft" class="chat-disabled-notice">
-      상대방이 채팅방을 나갔습니다.
+    <div v-if="props.room.isOtherUserLeft" class="chat-disabled-notice">
+      Chat Over
     </div>
-    <div v-else class="message-input">
-    <div class="p-3 border-top d-flex">
+    <div v-else class="p-3 border-top d-flex">
       <input 
         type="text" 
         class="form-control me-2" 
         v-model="message" 
         @keyup.enter="sendMessage" 
-        @click="handleClick"
-        placeholder="메시지를 입력하세요..."
+        @click="handleInputClick"
+        placeholder="Send Your Message..."
         :disabled="!props.isConnected"
-        id="selectInput"
       />
       <button 
         class="btn btn-primary" 
         @click="sendMessage"
         :disabled="!props.isConnected || !message.trim()"
       >
-        전송
+        send
       </button>
-    </div>
     </div>
   </div>
 
@@ -91,33 +114,104 @@
   <div v-else class="d-flex align-items-center justify-content-center flex-grow-1">
     <div class="text-center text-muted">
       <div style="font-size: 48px;">💬</div>
-      <h5 class="mt-3">채팅방을 선택해주세요</h5>
-      <p>왼쪽에서 채팅방을 선택하면 대화를 시작할 수 있습니다.</p>
+      <h5 class="mt-3">Welcome!</h5>
+      <p>Click Your ChatRoom. You can Start the Chat</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed ,watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
+import api from '@/api'
+
 const chatStore = useChatStore()
 
-const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected', 'title'])
+const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected', 'boardNumber'])
+const emit = defineEmits(['sendMessage', 'quitRoom', 'lastMessageUpdate'])
 
 const message = ref('')
 const chatArea = ref(null)
+const productInfo = ref({
+  title: '',
+  mainImage: '',
+  images: [],
+  price: ''
+})
 
+// 게시글 정보 가져오기
+const getBoardProduct = async (boardId) => {
+  if (!boardId) return
+  
+  try {
+    // console.log('🔍 게시글 정보 로드 중, boardId:', boardId)
+    
+    const response = await api.get(`/board/${boardId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      }
+    })
+    
+    const data = response.data
+    productInfo.value.title = data.board.title
+    productInfo.value.images = data.images || []
+    productInfo.value.price = data.board.price
+    
+    // 대표 이미지 찾기
+    const representativeImage = productInfo.value.images.find(img => img.representative)
+    if (representativeImage) {
+      productInfo.value.mainImage = `/images/display?fileName=${representativeImage.uploadPath}/${representativeImage.uuid}_${representativeImage.fileName}`
+    } else if (productInfo.value.images.length > 0) {
+      // 대표 이미지가 없으면 첫 번째 이미지 사용
+      const firstImage = productInfo.value.images[0]
+      productInfo.value.mainImage = `/images/display?fileName=${firstImage.uploadPath}/${firstImage.uuid}_${firstImage.fileName}`
+    }
+    
+    // console.log('🔍 게시글 정보 로드 완료:', productInfo.value)
+    
+  } catch (err) {
+    // console.error('게시글 정보 로드 실패:', err)
+    productInfo.value.title = "Can't read product"
+  }
+}
 
+// 이미지 로드 실패 처리
+const handleImageError = (event) => {
+  // console.error('이미지 로드 실패')
+  event.target.style.display = 'none'
+}
 
-const emit = defineEmits(['sendMessage', 'quitRoom','lastMessageUpdate'])
+// 채팅방 변경 감지
+watch(() => props.room, (newRoom) => {
+  if (newRoom && newRoom.boardId) {
+    // 게시글 정보 초기화
+    productInfo.value = {
+      title: '',
+      mainImage: '',
+      images: []
+    }
+    // 새 게시글 정보 로드
+    getBoardProduct(newRoom.boardId)
+    
+    // 마지막 메시지 업데이트
+    if (lastMessage.value) {
+      emit('lastMessageUpdate', {
+        chatId: newRoom.chatId,
+        lastMessage: lastMessage.value.content,
+        lastMessageTime: lastMessage.value.regdate,
+        lastMessageUserId: lastMessage.value.userId
+      })
+    }
+  }
+}, { immediate: true })
 
-// ✅ 새로 추가: 마지막 메시지 추출
+// 마지막 메시지 추출
 const lastMessage = computed(() => {
   if (!props.messages || props.messages.length === 0) return null
   return props.messages[props.messages.length - 1]
 })
 
-// ✅ 새로 추가: 마지막 메시지 변경 시 부모에게 전달
+// 마지막 메시지 변경 시 부모에게 전달
 watch(lastMessage, (newLastMessage) => {
   if (newLastMessage && props.room) {
     emit('lastMessageUpdate', {
@@ -127,28 +221,20 @@ watch(lastMessage, (newLastMessage) => {
       lastMessageUserId: newLastMessage.userId
     })
   }
-}, { immediate: true, deep: true })
+}, { deep: true })
 
-// ✅ 새로 추가: 채팅방 변경 시에도 마지막 메시지 전달
-watch(() => props.room, (newRoom) => {
-  if (newRoom && lastMessage.value) {
-    emit('lastMessageUpdate', {
-      chatId: newRoom.chatId,
-      lastMessage: lastMessage.value.content,
-      lastMessageTime: lastMessage.value.regdate,
-      lastMessageUserId: lastMessage.value.userId
-    })
-  }
-}, { immediate: true })
+// 메시지 변경 감지하여 스크롤
+watch(() => props.messages, () => {
+  scrollChatToBottom()
+}, { deep: true })
 
 const handleQuitRoom = () => {
-  
-  if (confirm(`정말로 "${getOtherUserName()}"님과의 채팅방을 나가시겠습니까?\n\n나간 후에는 대화 내역을 볼 수 없습니다.`)) {
+  if (confirm(`Do You want to quit chatroom with "${getOtherUserName()}"?\n\nYou can't see your messages NEVER.`)) {
     emit('quitRoom')
   }
 }
 
-function handleClick(){
+const handleInputClick = () => {
   chatStore.markRoomAsRead(props.room.chatId)
 }
 
@@ -168,9 +254,9 @@ const sendMessage = () => {
 
 const getOtherUserName = () => {
   if (!props.room) return ''
-  const tempName =  props.room.buyerId === props.currentUserId ? props.room.sellerId : props.room.buyerId
-  if (tempName == null){
-    return "(알 수 없음)"
+  const tempName = props.room.buyerId === props.currentUserId ? props.room.sellerId : props.room.buyerId
+  if (tempName == null) {
+    return "(Unknown)"
   }
   return tempName
 }
@@ -178,7 +264,7 @@ const getOtherUserName = () => {
 const formatDate = (isoStr) => {
   if (!isoStr) return ""
   const date = new Date(isoStr)
-  return date.toLocaleString('ko-KR')
+  return date.toLocaleString('en-US')
 }
 
 const scrollChatToBottom = () => {
@@ -189,20 +275,17 @@ const scrollChatToBottom = () => {
   })
 }
 
-// 메시지 변경 감지하여 스크롤
-watch(() => props.messages, () => {
-  scrollChatToBottom()
-}, { deep: true })
-
-// 채팅방 변경 시 스크롤
-watch(() => props.room, () => {
-  scrollChatToBottom()
-})
-
 const getMessageClass = (msg) => {
-  if (msg.userId === 'system') return 'system-message-wrapper'
-  return msg.userId === currentUserId ? 'message-my' : 'message-other'
+  if (msg.userId === 'system') return 'text-center'
+  return msg.userId === props.currentUserId ? 'text-end' : 'text-start'
 }
+
+// 컴포넌트 마운트 시
+onMounted(() => {
+  if (props.room && props.room.boardId) {
+    getBoardProduct(props.room.boardId)
+  }
+})
 </script>
 
 <style scoped>
@@ -210,9 +293,36 @@ const getMessageClass = (msg) => {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
 }
 
+/* 게시글 정보 박스 */
+.product-info-box {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #e9ecef;
+}
+
+.product-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.product-placeholder {
+  width: 50px;
+  height: 50px;
+  background-color: #e9ecef;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-size: 20px;
+}
+
 /* 채팅 스크롤 영역 개선 */
 .chat-scroll-area {
-  /* 스크롤바 스타일링 */
   scrollbar-width: thin;
   scrollbar-color: #c1c1c1 #f1f1f1;
 }
@@ -241,70 +351,6 @@ const getMessageClass = (msg) => {
   scroll-behavior: auto;
 }
 
-.dropdown-menu {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  background-color: white;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
-  display: none;
-  min-width: 10rem;
-  padding: 0.5rem 0;
-  margin: 0.125rem 0 0;
-  list-style: none;
-}
-
-.dropdown-menu.show {
-  display: block;
-}
-
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 0.375rem 1rem;
-  clear: both;
-  font-weight: 400;
-  color: #212529;
-  text-align: inherit;
-  text-decoration: none;
-  white-space: nowrap;
-  background-color: transparent;
-  border: 0;
-}
-
-.dropdown-item:hover,
-.dropdown-item:focus {
-  color: #1e2125;
-  background-color: #e9ecef;
-}
-
-.dropdown-item.text-danger {
-  color: #dc3545 !important;
-}
-
-.dropdown-item.text-danger:hover {
-  color: #fff !important;
-  background-color: #dc3545 !important;
-}
-
-.dropdown {
-  position: relative;
-}
-
-.dropdown-toggle::after {
-  display: inline-block;
-  margin-left: 0.255em;
-  vertical-align: 0.255em;
-  content: "";
-  border-top: 0.3em solid;
-  border-right: 0.3em solid transparent;
-  border-bottom: 0;
-  border-left: 0.3em solid transparent;
-}
-
 .system-message {
   text-align: center;
   color: #6c757d;
@@ -321,5 +367,11 @@ const getMessageClass = (msg) => {
   background-color: #f8f9fa;
   color: #6c757d;
   border-top: 1px solid #dee2e6;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

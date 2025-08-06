@@ -50,11 +50,11 @@
 
           <!-- Quick Actions -->
           <div class="quick-actions">
-            <button class="btn-primary">
+            <button class="btn-primary" @click="goToSellpage">
               <Plus class="btn-icon" />
               상품 등록
             </button>
-            <button class="btn-secondary">
+            <button class="btn-secondary" @click="goToProfileUpdate">
               <Edit class="btn-icon" />
               프로필 수정
             </button>
@@ -181,9 +181,13 @@ import '@/assets/styles/pages/Mypage.css'
 import api from '@/api'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+<<<<<<< HEAD
+=======
 import { storeToRefs } from 'pinia'
+>>>>>>> 3f3668d5b3e0e370b8af30543f0b7f9180e73c5d
 import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const activeMenu = ref('wishlist')
 const myProducts = ref([])
@@ -191,6 +195,14 @@ const wishlistItems = ref([])
 const placeholder = '/placeholder.svg'
 const { isLogin } = storeToRefs(authStore)
 const router = useRouter()
+
+const goToSellpage = () => {
+  router.push('/Sell')
+}
+
+const goToProfileUpdate = () => {
+  router.push('/ProfileUpdate')
+}
 
 const user = reactive({
   name: '',
@@ -228,7 +240,7 @@ async function loadWishlist(userId) {
 async function fetchProfileImage(userId) {
   try {
     const token = authStore.accessToken
-    const res = await axios.get(`/api/mypage/profile/${userId}`, {
+    const res = await axios.get(`/api/mypage/${userId}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

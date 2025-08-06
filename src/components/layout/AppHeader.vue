@@ -76,7 +76,7 @@ const unreadCount = computed(() => chatStore.unreadMessagesCount)
 async function fetchProfileImage(userId) {
   try {
     const token = authStore.accessToken;  // <-- 여기 수정
-    const res = await axios.get(`/api/mypage/profile/${userId}`, {
+    const res = await axios.get(`/api/mypage/${userId}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

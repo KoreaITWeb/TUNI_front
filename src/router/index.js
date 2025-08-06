@@ -7,7 +7,7 @@ import LoginPage from '@/pages/LoginPage.vue'
 import ListPage from '@/pages/ListPage.vue'
 import SellPage from '@/pages/SellPage.vue'
 import ChatPage from '@/pages/ChatPage.vue'
-
+import ProfileUpdate from '@/pages/ProfileUpdate.vue'
 const routes = [
   {
     path: '/', // ✅ 추가된 부분
@@ -31,6 +31,11 @@ const routes = [
     path: '/Profile',
     name: 'profile',
     component: MyPage
+  },
+  {
+    path: '/ProfileUpdate',
+    name: 'profileUpdate',
+    component: ProfileUpdate
   },
   {
     path: '/Login',

@@ -36,14 +36,12 @@
 
           <!-- Hero 이미지 카드 -->
           <div class="mt-10 lg:mt-0">
-            <div
-              class="w-[240px] h-[360px] bg-transparent rounded-2xl shadow-xl transform rotate-[4deg] flex items-center justify-center"
-            >
+            <div class="flex items-center justify-center">
               <img
                 :src="logoTuni"
                 alt="대학생 중고거래 로고"
-                class="h-full object-contain rounded-2xl p-4"
-              />
+                class="w-[220px] object-contain"
+                />
             </div>
           </div>
         </div>
@@ -64,30 +62,37 @@
           </button>
 
         </div>
-        <div class="products-grid">
-          <div
-            v-for="product in latestProducts"
-            :key="product.boardId"
-            class="product-card"
-            @click="goToDetail(product.boardId)" >
-            <div class="product-image-container">
-              <img
-                :src="product.thumbnailUrl || '../../placeholder.svg'"
-                :alt="product.title"
-                class="product-image"
-              />
-            </div>
-            <div class="product-info">
-              <h3 class="product-title">{{ product.title }}</h3>
-              <p class="product-price">
-                {{ product.price.toLocaleString() }}원
-              </p>
-              <div class="product-meta">
-                <span v-if="!isLogin" class="product-location">{{ product.schoolName }}</span>
-              </div>
-            </div>
-          </div>
+        <!-- 한 줄에 4개 고정 & 중앙 정렬 -->
+<div class="flex justify-center">
+  <div class="grid grid-cols-4 gap-4 max-w-[1150px] w-full">
+    <div
+      v-for="product in latestProducts.slice(0, 4)"
+      :key="product.boardId"
+      class="product-card cursor-pointer"
+      @click="goToDetail(product.boardId)"
+    >
+      <div class="product-image-container">
+        <img
+          :src="product.thumbnailUrl || '../../placeholder.svg'"
+          :alt="product.title"
+          class="w-full h-40 object-cover rounded"
+        />
+      </div>
+      <div class="product-info">
+        <h3 class="product-title">{{ product.title }}</h3>
+        <p class="product-price">
+          {{ product.price.toLocaleString() }}원
+        </p>
+        <div class="product-meta">
+          <span v-if="!isLogin" class="product-location">{{ product.schoolName }}</span>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
       </div>
     </section>
 
@@ -126,6 +131,7 @@ function handleGoShop() {
 function handleAddProduct() {
   if (!isLogin.value) {
     alert('로그인 후 이용 가능합니다.');
+    router.push('/login');
     return
   }
   router.push('/Sell');
@@ -134,6 +140,7 @@ function handleAddProduct() {
 function handleViewMore() {
   if (!isLogin.value) {
     alert('로그인 후 이용 가능합니다.');
+    router.push('/login');
     return
   }
   router.push('/Shop');
@@ -181,3 +188,5 @@ onMounted(() => {
   fetchLatestProducts();
 });
 </script>
+
+

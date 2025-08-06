@@ -33,21 +33,27 @@
         </div>
         <label class="form-label mt-3">Price</label>
         <div class="d-flex gap-2">
-        <input
-          type="number"
-          class="form-control"
-          placeholder="Min"
-          v-model="minPrice"
+          <input type="number" class="form-control" placeholder="Min" v-model="minPrice">
+          <span>~</span>
+          <input type="number" class="form-control" placeholder="Max" v-model="maxPrice">
+        </div>
+        <h5 class="mt-4">Status</h5>
+        <div
+          class="form-check"
+          v-for="status in allStatus"
+          :key="status"
         >
-        <span>~</span>
-        <input
-          type="number"
-          class="form-control"
-          placeholder="Max"
-          v-model="maxPrice"
-        >
+          <input
+            class="form-check-input"
+            type="checkbox"
+            :id="status"
+            :value="status"
+            :checked="selectedStatuses.includes(status)"
+            @change="toggleStatus(status)"
+          >
+          <label class="form-check-label" :for="status">{{ status }}</label>
       </div>
-</div>
+  </div>
 
       <!-- 오른쪽 콘텐츠 영역 -->
       <div class="col-md-9">
@@ -58,6 +64,13 @@
             <button class="btn btn-outline-secondary"  @click="onSearch">🔍</button>
           </div>
           <div class="btn-group">
+            <button
+              class="btn"
+              :class="sortOrder === 'recent' ? 'btn-primary' : 'btn-outline-secondary'"
+              @click="sortOrder = 'recent'"
+              >
+              Recently
+            </button>
               <button
                 class="btn"
                 :class="sortOrder === 'asc' ? 'btn-primary' : 'btn-outline-secondary'"
@@ -103,37 +116,38 @@
             </div>
           </div>
         </div>
-        <nav class="mt-4" style="display: flex; justify-content: center;">
-          <ul class="pagination">
-            <li
-              class="page-item"
-              :class="{ disabled: currentPage === 1 }"
-              @click="goToPage(currentPage - 1)"
-            >
-              <a class="page-link" style="cursor:pointer;">← Previous</a>
-            </li>
+        <nav aria-label="Page navigation" class="d-flex justify-content-center align-items-center mt-4 gap-3">
+              <button
+                class="btn btn-outline-primary"
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 1"
+              >
+                ← Previous
+              </button>
 
-            <li
-              class="page-item"
-              v-for="page in totalPages"
-              :key="page"
-              :class="{ active: currentPage === page }"
-              @click="goToPage(page)"
-            >
-              <a class="page-link" style="cursor:pointer;">{{ page }}</a>
-            </li>
+              <!-- 입력창 + 총 페이지 -->
+              <div class="d-flex align-items-center gap-2">
+                <input
+                  type="number"
+                  v-model.number="inputPage"
+                  :min="1"
+                  :max="totalPages"
+                  class="form-control"
+                  style="width: 60px; text-align: center;"
+                  @keyup.enter="goToInputPage"
+                />
+                / {{ totalPages }}
+              </div>
 
-            <li
-              class="page-item"
-              :class="{ disabled: currentPage === totalPages }"
-              @click="goToPage(currentPage + 1)"
-            >
-              <a class="page-link" style="cursor:pointer;">Next →</a>
-            </li>
-          </ul>
+              <!-- Next → 버튼 -->
+              <button
+                class="btn btn-outline-primary"
+                @click="goToPage(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+              >
+                Next →
+              </button>
         </nav>
-
-
       </div>
     </div>
   </div>
@@ -161,19 +175,22 @@ const allCategories = [
 const selectedCategories = ref([]);
 const currentPage = ref(1);
 const itemsPerPage = 12;
-const sortOrder = ref(""); 
+const sortOrder = ref("recent"); 
 const tempKeyword = ref(""); 
 const searchKeyword = ref("");
-
+const inputPage = ref(1);
+const selectedStatuses = ref([]);
+const allStatus = ['SALE','SOLD']
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  return filteredProducts.value.slice(start, end);
+  return sortedProducts.value.slice(start, end);
 });
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredProducts.value.length / itemsPerPage);
+  const total = Math.ceil(filteredProducts.value.length / itemsPerPage);
+  return total > 0 ? total : 1;
 });
 
 // 토큰 관련
@@ -186,6 +203,8 @@ const sortedProducts = computed(() => {
     sorted.sort((a, b) => Number(a.price) - Number(b.price));
   } else if (sortOrder.value === "desc") {
     sorted.sort((a, b) => Number(b.price) - Number(a.price));
+  } else if (sortOrder.value === "recent") {
+    sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createAt));
   }
   return sorted;
 });
@@ -193,7 +212,6 @@ const sortedProducts = computed(() => {
 
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
-    
     // 카테고리 조건
     const categoryMatch =
       selectedCategories.value.length === 0 ||
@@ -206,6 +224,7 @@ const filteredProducts = computed(() => {
     const minOk = !minPrice.value || price >= min;
     const maxOk = !maxPrice.value || price <= max;
 
+    // 검색어 조건
     const keyword = searchKeyword.value.trim().toLowerCase();
     const title = product.title?.toLowerCase() || "";
     const content = product.content?.toLowerCase() || "";
@@ -213,9 +232,14 @@ const filteredProducts = computed(() => {
       keyword === "" ||
       title.includes(keyword) ||
       content.includes(keyword);
+    
+    // 판매 상태 조건
+    const statusMatch = 
+      selectedStatuses.value.length === 0 ||
+      (product.saleStatus && selectedStatuses.value.includes(product.saleStatus));
 
-    return categoryMatch && minOk && maxOk && keywordMatch;
-    return categoryMatch && minOk && maxOk;
+    // 모든 조건이 true일 때만 상품을 반환하도록 수정
+    return categoryMatch && minOk && maxOk && keywordMatch && statusMatch;
   });
 });
 
@@ -224,6 +248,13 @@ watch([selectedCategories, minPrice, maxPrice], () => {
   currentPage.value = 1;
 });
 
+watch(currentPage, (newPage) => {
+  inputPage.value = newPage;
+});
+
+watch([selectedCategories, selectedStatuses, minPrice, maxPrice], () => {
+  currentPage.value = 1;
+}); 
 // 백엔드 API를 호출하여 상품 목록을 가져오는 함수
 async function fetchProducts() {
   try {
@@ -251,6 +282,7 @@ async function fetchProducts() {
     const response = await api.post('/board/list', requestData);
     
     if (response.data.success) {
+      console.log(response.data.list);
       products.value = response.data.list;
       user.value = response.data.user;
     } else {
@@ -275,6 +307,13 @@ function onSearch() {
   currentPage.value = 1; // 검색 결과가 바뀌었으니 페이지 초기화
 }
 
+function goToInputPage() {
+  if (inputPage.value >= 1 && inputPage.value <= totalPages.value) {
+    currentPage.value = inputPage.value;
+  } else {
+    alert(`1부터 ${totalPages.value} 사이의 숫자를 입력해주세요.`);
+  }
+}
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
@@ -293,6 +332,28 @@ function toggleCategory(category) {
 
 function removeCategory(category) {
   selectedCategories.value = selectedCategories.value.filter(c => c !== category);
+}
+// SALE과 SOLD 둘 다 선택 가능
+/*
+function toggleStatus(status) {
+  const index = selectedStatuses.value.indexOf(status);
+  if (index > -1) {
+    // 이미 선택된 상태라면 제거
+    selectedStatuses.value.splice(index, 1);
+  } else {
+    // 선택되지 않은 상태라면 추가
+    selectedStatuses.value.push(status);
+  }
+}*/
+// SALE과 SOLD 둘 중 하나만 선택
+function toggleStatus(status) {
+  // 현재 선택된 상태가 클릭한 상태와 같다면, 선택 해제 (배열 비우기)
+  if (selectedStatuses.value.includes(status)) {
+    selectedStatuses.value = [];
+  } else {
+    // 다르다면, 클릭한 상태만 선택
+    selectedStatuses.value = [status];
+  }
 }
 
 // 컴포넌트가 화면에 마운트될 때 함수를 실행

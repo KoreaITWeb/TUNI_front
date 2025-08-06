@@ -10,6 +10,17 @@
           placeholder="Enter your nickname"
           required
         />
+        <label for="profileImg">Profile Image</label>
+        <input
+          id="profileImg"
+          type="file"
+          accept="image/*"
+          @change="handleFileChange"
+        />
+        <!-- 이미지 미리보기 -->
+        <div v-if="previewImg">
+          <img :src="previewImg" alt="Preview" style="max-width: 150px; margin-top: 10px;" />
+        </div>
         <button type="submit" :disabled="isLoading">
           {{ isLoading ? 'Setting up...' : 'Complete' }}
         </button>
@@ -32,10 +43,26 @@ const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const nickname = ref('')
+const profileImg = ref(null)
+const previewImg = ref(null)
 const isLoading = ref(false)
 
 const email = route.query.email
 const code = route.query.code
+
+// 파일 선택 시 호출
+const handleFileChange = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    alert('이미지 파일만 업로드할 수 있습니다.')
+    return
+  }
+
+  profileImg.value = file
+  previewImg.value = URL.createObjectURL(file)
+}
 
 const submitNickname = async () => {
   if (!nickname.value.trim()) {
@@ -59,11 +86,21 @@ const submitNickname = async () => {
       return
     }
 
-    const response2 = await api.post('/api/auth/register', {
-        email: email,
-        code: code,
-        userId: nickname.value.trim(),
-    })
+    // FormData 생성 (multipart/form-data)
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('code', code)
+    formData.append('userId', nickname.value.trim())
+    if (profileImg.value) {
+      formData.append('profileImg', profileImg.value)
+    }
+
+    // 회원가입 API 호출
+    const response2 = await api.post('/api/auth/register', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     if (response2.data){
       alert('닉네임 설정이 완료되었습니다!')
       const result = response2.data

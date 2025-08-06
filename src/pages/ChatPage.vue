@@ -31,7 +31,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ChatList from '@/components/chat/ChatList.vue'
 import ChatDetail from '@/components/chat/ChatDetail.vue'
 import { useChatStore } from '@/stores/chat'
@@ -41,11 +41,12 @@ import api from '@/api'
 
 const API_BASE = "/api/chat"
 const route = useRoute()
+const router = useRouter()
 
 // Store 사용
 const chatStore = useChatStore()
 const authStore = useAuthStore()
-const { userId: loggedInUserId } = storeToRefs(authStore)
+const { userId: loggedInUserId, isLogin } = storeToRefs(authStore)
 
 // 로컬 상태 (ChatPages 전용)
 const selectedRoom = ref(null)
@@ -478,6 +479,10 @@ const handleCheckCurrentRoom = (event) => {
 
 // 컴포넌트 마운트 시 초기화
 onMounted(async () => {
+  if (!isLogin.value) {
+    alert('로그인 후 이용가능합니다.');
+    router.push('/login');
+  }
   // console.log('🔍 ChatPages 마운트됨')
   
   // 로그인된 사용자 ID 설정

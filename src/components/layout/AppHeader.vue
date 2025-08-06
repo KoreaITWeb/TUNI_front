@@ -4,7 +4,7 @@
       <div class="flex justify-between items-center h-16">
         <!-- 로고 -->
         <router-link to="/main" class="flex items-center space-x-2">
-          <img :src="logoTuni" alt="TUNI 아이콘" class="h-8 w-8" />
+          <img :src="logoTuni" alt="TUNI 아이콘" class="h-20 w-auto sm:h-16" />
           <span class="text-xl font-bold text-gray-800">TUNI</span>
         </router-link>
         
@@ -42,8 +42,17 @@
 
           <div>
             <template v-if="authStore.isLogin">
-              <span class="text-sm font-medium text-gray-800 mr-2">{{ authStore.userId }}님</span>
-              <button @click="logout" class="text-sm text-red-500 hover:underline">Logout</button>
+              <div class="flex items-center space-x-2">
+                <!-- 프로필 이미지 추가 -->
+                <img 
+                  :src="profileImgUrl || 'https://your-domain.com/images/default-profile.png'" 
+                  alt="프로필 사진" 
+                  class="w-8 h-8 rounded-full object-cover"
+                />
+                <span class="text-sm font-medium text-gray-800 mr-2">{{ authStore.userId }}님</span>
+                <button @click="logout" class="text-sm text-red-500 hover:underline">Logout</button>
+              </div>
+              
             </template>
             <template v-else>
               <button @click="goToLogin" class="text-sm text-blue-600 hover:underline">Login</button>
@@ -56,30 +65,68 @@
 </template>
 
 <script setup>
-import logoTuni from '@/assets/logo-tuni.png'
+import logoTuni from '@/assets/logo-tuni-icon.png'
 import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
-import { computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import axios from 'axios'
 
 const authStore = useAuthStore()
 const chatStore = useChatStore()
 const router = useRouter()
 
+const profileImgUrl = ref('')
 // ✅ 안읽은 메시지 총 개수
 const unreadCount = computed(() => chatStore.unreadMessagesCount)
+
+async function fetchProfileImage(userId) {
+  try {
+    const token = authStore.accessToken;  // <-- 여기 수정
+    const res = await axios.get(`/api/mypage/${userId}/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      responseType: 'blob'  // 이 부분 추가
+    });
+    console.log('프로필 이미지 API 응답:', res.data);
+    // if (res.data && res.data.profileImgUrl) {
+    //   profileImgUrl.value = 'http://localhost:8443' + res.data.profileImgUrl;
+    //   console.log('profileImgUrl:', profileImgUrl.value)
+
+    // } else {
+    //   profileImgUrl.value = '';
+    // }
+    if (res.data) {
+      profileImgUrl.value = URL.createObjectURL(res.data);
+    } else {
+      profileImgUrl.value = '';
+    }
+  } catch (error) {
+    console.error('프로필 이미지 불러오기 실패:', error);
+    profileImgUrl.value = '';
+  }
+}
+
+
 
 // ✅ 로그인 시 전역 WebSocket 연결
 watch(
   () => authStore.userId,
   async (newUserId) => {
     if (newUserId && !chatStore.isConnected) {
+
+      fetchProfileImage(newUserId)
+      console.log('🔍 Header - 사용자 로그인, WebSocket 연결 시작')
+
       // console.log('🔍 Header - 사용자 로그인, WebSocket 연결 시작')
+
       chatStore.connectGlobalWebSocket(newUserId)
     } else if (!newUserId && chatStore.isConnected) {
       // console.log('🔍 Header - 사용자 로그아웃, WebSocket 연결 해제')
       chatStore.disconnectGlobalWebSocket()
+      profileImgUrl.value = ''
     }
   },
   { immediate: true }
@@ -89,6 +136,9 @@ watch(
 onMounted(() => {
   if (authStore.userId && !chatStore.isConnected) {
     chatStore.connectGlobalWebSocket(authStore.userId)
+  }
+  if (authStore.userId) {
+    fetchProfileImage(authStore.userId)
   }
 })
 

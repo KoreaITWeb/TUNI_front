@@ -62,30 +62,37 @@
           </button>
 
         </div>
-        <div class="products-grid">
-          <div
-            v-for="product in latestProducts"
-            :key="product.boardId"
-            class="product-card"
-            @click="goToDetail(product.boardId)" >
-            <div class="product-image-container">
-              <img
-                :src="product.thumbnailUrl || '../../placeholder.svg'"
-                :alt="product.title"
-                class="product-image"
-              />
-            </div>
-            <div class="product-info">
-              <h3 class="product-title">{{ product.title }}</h3>
-              <p class="product-price">
-                {{ product.price.toLocaleString() }}원
-              </p>
-              <div class="product-meta">
-                <span v-if="!isLogin" class="product-location">{{ product.schoolName }}</span>
-              </div>
-            </div>
-          </div>
+        <!-- 한 줄에 4개 고정 & 중앙 정렬 -->
+<div class="flex justify-center">
+  <div class="grid grid-cols-4 gap-4 max-w-[1150px] w-full">
+    <div
+      v-for="product in latestProducts.slice(0, 4)"
+      :key="product.boardId"
+      class="product-card cursor-pointer"
+      @click="goToDetail(product.boardId)"
+    >
+      <div class="product-image-container">
+        <img
+          :src="product.thumbnailUrl || '../../placeholder.svg'"
+          :alt="product.title"
+          class="w-full h-40 object-cover rounded"
+        />
+      </div>
+      <div class="product-info">
+        <h3 class="product-title">{{ product.title }}</h3>
+        <p class="product-price">
+          {{ product.price.toLocaleString() }}원
+        </p>
+        <div class="product-meta">
+          <span v-if="!isLogin" class="product-location">{{ product.schoolName }}</span>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
       </div>
     </section>
 
@@ -179,3 +186,5 @@ onMounted(() => {
   fetchLatestProducts();
 });
 </script>
+
+

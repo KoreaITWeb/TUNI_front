@@ -29,36 +29,62 @@
           <textarea v-model="content" id="content" placeholder="설명" class="form-control" rows="4" required></textarea>
         </div>
         
-        <div v-if="!isEditMode">
+        <div v-if="isEditMode" class="space-y-4">
+          <div>
+            <label class="form-label font-semibold">Photos</label>
+            <p class="text-sm text-gray-500">대표 이미지를 클릭하여 변경하고, X 버튼으로 삭제하세요.</p>
+            <div class="flex flex-wrap gap-4 mt-2">
+              <div v-for="image in existingImages" :key="image.uuid"
+                   class="relative cursor-pointer border-3 rounded-lg overflow-hidden transition-all"
+                   :class="{
+                      'border-blue-500': representativeSelection.type === 'existing' && representativeSelection.id === image.uuid,
+                      'border-gray-300': !(representativeSelection.type === 'existing' && representativeSelection.id === image.uuid)
+                    }"
+                   @click="setRepresentative('existing', image.uuid)">
+                <img :src="`/images/display?fileName=${image.uploadPath}/${image.uuid}_${image.fileName}`" class="w-24 h-24 object-cover block" />
+                <div v-if="representativeSelection.type === 'existing' && representativeSelection.id === image.uuid" class="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center">✓</div>
+                <button type="button" @click.stop="deleteExistingImage(image.uuid)" class="delete-btn" style="top: 1px; left: 1px; overflow: visible;">×</button>
+              </div>
+              
+            </div>
+          </div>
+          <div>
+            <label for="photo-add" class="form-label font-semibold">Add New Photos</label>
+            <input type="file" id="photo-add" @change="handleFileUpload" multiple accept="image/*" class="form-control"/>
+          </div>
+          <div class="flex flex-wrap gap-4 mt-2">
+            <div v-for="(image, index) in newImagePreviews" :key="image.url"
+                  class="relative cursor-pointer border-3 rounded-lg overflow-hidden transition-all"
+                  :class="{
+                    'border-blue-500': representativeSelection.type === 'new' && representativeSelection.id === index,
+                    'border-gray-300': !(representativeSelection.type === 'new' && representativeSelection.id === index)
+                  }"
+                  @click="setRepresentative('new', index)">
+              <img :src="image.url" class="w-24 h-24 object-cover block"/>
+              <div v-if="representativeSelection.type === 'new' && representativeSelection.id === index" class="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center">✓</div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-else>
           <label for="photo" class="form-label font-semibold">Photo</label>
           <input type="file" @change="handleFileUpload" multiple accept="image/*" class="form-control"/>
-        
-
-          <p v-if="previewImages.length > 0" class="text-sm text-gray-500">
-            대표 이미지로 사용할 사진을 클릭하세요.
-          </p>
-
-          <div v-if="previewImages.length > 0" class="flex flex-wrap gap-4 mt-2">
+          <p v-if="newImagePreviews.length > 0" class="text-sm text-gray-500">대표 이미지로 사용할 사진을 클릭하세요.</p>
+          <div v-if="newImagePreviews.length > 0" class="flex flex-wrap gap-4 mt-2">
             <div
-              v-for="(image, index) in previewImages"
-              :key="index"
+              v-for="(image, index) in newImagePreviews" :key="index"
               class="relative cursor-pointer border-3 rounded-lg overflow-hidden transition-all"
-              :class="index === representativeIndex ? 'border-blue-500' : 'border-transparent'"
-              @click="setRepresentative(index)"
-            >
+              :class="{
+                'border-blue-500': representativeSelection.type === 'new' && representativeSelection.id === index,
+                'border-transparent': !(representativeSelection.type === 'new' && representativeSelection.id === index)
+              }"
+              @click="setRepresentative('new', index)">
               <img :src="image.url" class="w-24 h-24 object-cover block" alt="미리보기 이미지"/>
-              <div 
-                v-if="index === representativeIndex"
-                class="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
-              >
-                ✓
-              </div>
+              <div v-if="representativeSelection.type === 'new' && representativeSelection.id === index" class="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center">✓</div>
             </div>
-          </div>  
+          </div>
         </div>
-        <div v-else class="p-4 bg-gray-100 rounded-md text-sm text-gray-600">
-          이미지 수정 기능은 현재 지원되지 않습니다.
-        </div>
+        
       </div>
 
       <button type="submit" class="btn btn-dark w-full mt-6 py-2.5">Upload Item</button>
@@ -91,24 +117,30 @@ const categories = ref([
   'Electronics', 'Books', 'Clothings', 'Home & kitchen', 
   'Shoes', 'Beauty', 'Hobby'
 ]);
-const selectedFiles = ref([])
-const previewImages = ref([])
-const representativeIndex = ref(0); // 대표 사진 저장할 변수
 
-// 폼 초기화 함수
+// 이미지 상태 변수
+const existingImages = ref([]);
+const newFiles = ref([]);
+const newImagePreviews = ref([]);
+const deletedImages = ref([]); // 삭제할 이미지 객체 전체를 저장 (복구 대비)
+const representativeSelection = ref({ type: null, id: null }); // { type: 'existing' | 'new', id: uuid | index }
+
+// 폼 초기화
 function resetForm() {
   productId.value = null;
-  title.value = '';
-  price.value = '';
-  content.value = '';
+  title.value = ''; 
+  price.value = ''; 
+  content.value = ''; 
   category.value = '';
-  selectedFiles.value = [];
-  previewImages.value = [];
-  representativeIndex.value = 0;
+  existingImages.value = []; 
+  newFiles.value = []; 
+  newImagePreviews.value = []; 
+  deletedImages.value = [];
+  representativeSelection.value = { type: null, id: null };
 }
 
 // 라우트 변경을 감시하는 watch 로직
-watch(() => route.params.id, (newId, oldId) => {
+watch(() => route.params.id, (newId) => {
   // URL의 id 파라미터가 변경될 때마다 이 코드가 실행됩니다.
   if (!newId) {
     // newId가 없다는 것은 /sell 경로로 이동했다는 의미입니다.
@@ -123,17 +155,44 @@ async function fetchProductForEdit() {
   try {
     const response = await api.get(`/board/${productId.value}`);
     const product = response.data.board;
+    const images = response.data.images;
     
     // 폼 상태를 불러온 데이터로 채움
     title.value = product.title;
     price.value = product.price;
     content.value = product.content;
     category.value = product.category;
-
+    existingImages.value = images; 
+    // 기본 대표 이미지 설정
+    const repImage = images.find(img => img.representative);
+    if (repImage) {
+      representativeSelection.value = { type: 'existing', id: repImage.uuid };
+    }
+    
   } catch (err) {
     console.error('상품 정보 로딩 실패:', err);
     alert('기존 상품 정보를 불러오는 데 실패했습니다.');
     router.push('/shop');
+  }
+}
+
+// 기존 이미지 삭제/복구 처리
+function deleteExistingImage(uuid) {
+  const imageIndex = existingImages.value.findIndex(img => img.uuid === uuid);
+  if (imageIndex > -1) {
+    const [deletedImage] = existingImages.value.splice(imageIndex, 1);
+    deletedImages.value.push(deletedImage);
+
+    // 삭제된 이미지가 대표 이미지였다면, 남은 이미지 중 첫 번째를 대표로 지정
+    if (representativeSelection.value.id === uuid) {
+      if (existingImages.value.length > 0) {
+        setRepresentative('existing', existingImages.value[0].uuid);
+      } else if (newFiles.value.length > 0) {
+        setRepresentative('new', 0);
+      } else {
+        setRepresentative(null, null);
+      }
+    }
   }
 }
 
@@ -145,30 +204,39 @@ onMounted(() => {
   fetchProductForEdit();
 });
 
-function setRepresentative(index) {
-  representativeIndex.value = index;
+// 대표 이미지 설정 함수
+function setRepresentative(type, id) {
+  representativeSelection.value = { type, id };
 }
 
+// 파일 핸들링
 function handleFileUpload(event) {
   const files = event.target.files;
   if (!files) return;
-
-  selectedFiles.value = Array.from(files);
-  previewImages.value = [];
-  
-  for (const file of selectedFiles.value) {
-    previewImages.value.push({
-      url: URL.createObjectURL(file),
-      file: file
-    });
+  newFiles.value = Array.from(files);
+  newImagePreviews.value = [];
+  for (const file of newFiles.value) {
+    newImagePreviews.value.push({ url: URL.createObjectURL(file) });
   }
-  representativeIndex.value = 0;
+  // 새 파일 업로드 시, 기존 이미지가 없다면 새 파일의 첫 번째를 대표로 자동 선택
+  if (existingImages.value.length === 0) {
+    setRepresentative('new', 0);
+  }
 }
 
 async function submitItem() {
+  const headers = { Authorization: `Bearer ${localStorage.getItem('accessToken')}` };
+
   if (isEditMode.value) {
     // --- 수정 로직 ---
     try {
+      const remainingImageCount = existingImages.value.length;
+      const newImageCount = newFiles.value.length;
+      if (remainingImageCount + newImageCount === 0) {
+        alert('최소 한 개 이상의 이미지가 필요합니다.');
+        return;
+      }
+      
       await api.post('/board/update', {
         boardId: productId.value,
         title: title.value,
@@ -177,10 +245,47 @@ async function submitItem() {
         category: category.value,
       },
       {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
-        }
+        headers
       });
+
+      // 삭제하기로 선택한 이미지들 삭제 API 호출
+      await Promise.all(
+        deletedImages.value.map(img => api.delete(`/images/${img.uuid}`, { headers: {...headers} }))
+      );
+
+      // 새로 추가된 이미지가 있다면 업로드
+      let uploadedImages = [];
+      if (newFiles.value.length > 0) {
+        const imageFormData = new FormData();
+        imageFormData.append('boardId', productId.value);
+        newFiles.value.forEach(file => {
+          imageFormData.append('uploadFile', file);
+        });
+        
+        const uploadResponse = await api.post('/images/upload', imageFormData, {
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            ...headers
+          }
+        });
+        uploadedImages = uploadResponse.data;
+      }
+      // 최종 대표 이미지 설정 API 호출
+      if (representativeSelection.value.id !== null) {
+        let repUuid;
+        if (representativeSelection.value.type === 'existing') {
+          repUuid = representativeSelection.value.id;
+        } else { // 'new'
+          // 업로드된 파일 중 대표로 선택된 파일의 uuid 찾기
+          const repFile = newFiles.value[representativeSelection.value.id];
+          const uploadedRepImage = uploadedImages.find(img => img.fileName === repFile.name);
+          if(uploadedRepImage) repUuid = uploadedRepImage.uuid;
+        }
+        if (repUuid) {
+          await api.patch(`/images/${productId.value}/representative`, { uuid: repUuid });
+        }
+      }
+
       alert('상품 수정을 완료하였습니다.');
       router.push(`/details/${productId.value}`); // 수정 후 상세 페이지로 이동
     } catch (err) {
@@ -210,19 +315,22 @@ async function submitItem() {
         throw new Error('게시물 ID를 받아오지 못했습니다.');
       }
 
-      if (selectedFiles.value.length > 0) {
-        const imageFormData = new FormData();
-        imageFormData.append('boardId', newBoardId);
-        const representativeFileName = selectedFiles.value[representativeIndex.value].name;
-        imageFormData.append('representativeFileName', representativeFileName);
-        
-        selectedFiles.value.forEach(file => {
-          imageFormData.append('uploadFile', file);
+      const imageFormData = new FormData();
+      imageFormData.append('boardId', newBoardId);
+      newFiles.value.forEach(file => imageFormData.append('uploadFile', file));
+      const uploadResponse = await api.post('/images/upload', imageFormData, 
+        { 
+          headers: { 'Content-Type': 'multipart/form-data' },
+          ...headers
         });
-        
-        await api.post('/images/upload', imageFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+      const uploadedImages = uploadResponse.data;
+
+      if (uploadedImages && uploadedImages.length > 0) {
+        const repFileName = newFiles.value[representativeSelection.value.id].name;
+        const repImage = uploadedImages.find(img => img.fileName === repFileName);
+        if (repImage) {
+          await api.patch(`/images/${newBoardId}/representative`, { uuid: repImage.uuid });
+        }
       }
 
       alert('상품 등록을 완료하였습니다.');
@@ -235,3 +343,13 @@ async function submitItem() {
   }
 }
 </script>
+<style scoped>
+.preview-item { position: relative; cursor: pointer; /* ... */ }
+.delete-btn {
+  position: absolute; top: -10px; left: -10px;
+  background-color: rgba(0,0,0,0.7); color: white;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: none; display: flex; justify-content: center; align-items: center;
+  font-size: 12px; line-height: 1; cursor: pointer;
+}
+</style>

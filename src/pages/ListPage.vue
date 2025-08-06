@@ -33,21 +33,27 @@
         </div>
         <label class="form-label mt-3">Price</label>
         <div class="d-flex gap-2">
-        <input
-          type="number"
-          class="form-control"
-          placeholder="Min"
-          v-model="minPrice"
+          <input type="number" class="form-control" placeholder="Min" v-model="minPrice">
+          <span>~</span>
+          <input type="number" class="form-control" placeholder="Max" v-model="maxPrice">
+        </div>
+        <h5 class="mt-4">Status</h5>
+        <div
+          class="form-check"
+          v-for="status in allStatus"
+          :key="status"
         >
-        <span>~</span>
-        <input
-          type="number"
-          class="form-control"
-          placeholder="Max"
-          v-model="maxPrice"
-        >
+          <input
+            class="form-check-input"
+            type="checkbox"
+            :id="status"
+            :value="status"
+            :checked="selectedStatuses.includes(status)"
+            @change="toggleStatus(status)"
+          >
+          <label class="form-check-label" :for="status">{{ status }}</label>
       </div>
-</div>
+  </div>
 
       <!-- 오른쪽 콘텐츠 영역 -->
       <div class="col-md-9">
@@ -173,13 +179,14 @@ const sortOrder = ref("recent");
 const tempKeyword = ref(""); 
 const searchKeyword = ref("");
 const inputPage = ref(1);
+const selectedStatuses = ref([]);
+const allStatus = ['SALE','SOLD']
 
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
   return sortedProducts.value.slice(start, end);
 });
-
 
 const totalPages = computed(() => {
   const total = Math.ceil(filteredProducts.value.length / itemsPerPage);
@@ -205,7 +212,6 @@ const sortedProducts = computed(() => {
 
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
-    
     // 카테고리 조건
     const categoryMatch =
       selectedCategories.value.length === 0 ||
@@ -218,6 +224,7 @@ const filteredProducts = computed(() => {
     const minOk = !minPrice.value || price >= min;
     const maxOk = !maxPrice.value || price <= max;
 
+    // 검색어 조건
     const keyword = searchKeyword.value.trim().toLowerCase();
     const title = product.title?.toLowerCase() || "";
     const content = product.content?.toLowerCase() || "";
@@ -225,8 +232,14 @@ const filteredProducts = computed(() => {
       keyword === "" ||
       title.includes(keyword) ||
       content.includes(keyword);
+    
+    // 판매 상태 조건
+    const statusMatch = 
+      selectedStatuses.value.length === 0 ||
+      (product.saleStatus && selectedStatuses.value.includes(product.saleStatus));
 
-    return categoryMatch && minOk && maxOk && keywordMatch;
+    // 모든 조건이 true일 때만 상품을 반환하도록 수정
+    return categoryMatch && minOk && maxOk && keywordMatch && statusMatch;
   });
 });
 
@@ -239,6 +252,9 @@ watch(currentPage, (newPage) => {
   inputPage.value = newPage;
 });
 
+watch([selectedCategories, selectedStatuses, minPrice, maxPrice], () => {
+  currentPage.value = 1;
+}); 
 // 백엔드 API를 호출하여 상품 목록을 가져오는 함수
 async function fetchProducts() {
   try {
@@ -266,6 +282,7 @@ async function fetchProducts() {
     const response = await api.post('/board/list', requestData);
     
     if (response.data.success) {
+      console.log(response.data.list);
       products.value = response.data.list;
       user.value = response.data.user;
     } else {
@@ -315,6 +332,28 @@ function toggleCategory(category) {
 
 function removeCategory(category) {
   selectedCategories.value = selectedCategories.value.filter(c => c !== category);
+}
+// SALE과 SOLD 둘 다 선택 가능
+/*
+function toggleStatus(status) {
+  const index = selectedStatuses.value.indexOf(status);
+  if (index > -1) {
+    // 이미 선택된 상태라면 제거
+    selectedStatuses.value.splice(index, 1);
+  } else {
+    // 선택되지 않은 상태라면 추가
+    selectedStatuses.value.push(status);
+  }
+}*/
+// SALE과 SOLD 둘 중 하나만 선택
+function toggleStatus(status) {
+  // 현재 선택된 상태가 클릭한 상태와 같다면, 선택 해제 (배열 비우기)
+  if (selectedStatuses.value.includes(status)) {
+    selectedStatuses.value = [];
+  } else {
+    // 다르다면, 클릭한 상태만 선택
+    selectedStatuses.value = [status];
+  }
 }
 
 // 컴포넌트가 화면에 마운트될 때 함수를 실행

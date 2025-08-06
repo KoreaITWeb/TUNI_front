@@ -2,7 +2,7 @@
   <div class="shop-container">
     <div class="row">
       <!-- 왼쪽 필터 영역 -->
-      <div class="col-md-3 border-end">
+      <div class="col-md-3 border-end" style="margin-top: 5rem;">
         <h5>Category</h5>
         <div class="mb-2">
           <span
@@ -108,11 +108,12 @@
              :key="product.boardId"
              @click="goToDetail(product.boardId)"
           >
+            <div v-if="product.saleStatus === 'SOLD'" class="sold-out-badge">SOLD OUT</div>
             <img :src="product.thumbnailUrl || '../../placeholder.svg'" alt="상품 이미지" class="product-image"/> 
             <div class="card-body">
-              <h6 class="card-title">{{ product.title }}</h6>
-              <p class="card-text text-truncate">{{ product.content }}</p> 
+              <h4 class="card-title">{{ product.title }}</h4>
               <p class="card-text fw-bold">$ {{ product.price }}</p>
+              <p class="card-text text-muted" style="font-size: 0.8rem;">{{ timeSince(product.regdate) }}</p>
             </div>
           </div>
         </div>
@@ -204,7 +205,7 @@ const sortedProducts = computed(() => {
   } else if (sortOrder.value === "desc") {
     sorted.sort((a, b) => Number(b.price) - Number(a.price));
   } else if (sortOrder.value === "recent") {
-    sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createAt));
+    sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }
   return sorted;
 });
@@ -267,7 +268,7 @@ async function fetchProducts() {
     if (!currentIsLogin || !currentUserId || !currentSchoolId) {
       error.value = '로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.';
       isLoading.value = false;
-      alert('로그인 후 이용가능합니다.');
+      alert('Please log in to continue.');
       router.push('/login');
       return;
     }
@@ -333,18 +334,6 @@ function toggleCategory(category) {
 function removeCategory(category) {
   selectedCategories.value = selectedCategories.value.filter(c => c !== category);
 }
-// SALE과 SOLD 둘 다 선택 가능
-/*
-function toggleStatus(status) {
-  const index = selectedStatuses.value.indexOf(status);
-  if (index > -1) {
-    // 이미 선택된 상태라면 제거
-    selectedStatuses.value.splice(index, 1);
-  } else {
-    // 선택되지 않은 상태라면 추가
-    selectedStatuses.value.push(status);
-  }
-}*/
 // SALE과 SOLD 둘 중 하나만 선택
 function toggleStatus(status) {
   // 현재 선택된 상태가 클릭한 상태와 같다면, 선택 해제 (배열 비우기)
@@ -354,6 +343,47 @@ function toggleStatus(status) {
     // 다르다면, 클릭한 상태만 선택
     selectedStatuses.value = [status];
   }
+}
+
+function timeSince(dateString) {
+  const dbDate = new Date(dateString.replace(' ', 'T'));
+  const now = new Date();
+  const dateOnly = new Date(dbDate.getFullYear(), dbDate.getMonth(), dbDate.getDate());
+  const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const diffInDays = Math.floor((nowOnly.getTime() - dateOnly.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffInDays >= 365) {
+    const years = now.getFullYear() - dbDate.getFullYear();
+    const yearText = years === 1 ? 'year' : 'years';
+    return `${years} ${yearText} ago`;
+  }
+  
+  if (diffInDays >= 30) {
+    let months = (now.getFullYear() - dbDate.getFullYear()) * 12;
+    months -= dbDate.getMonth();
+    months += now.getMonth();
+    const monthText = months === 1 ? 'month' : 'months';
+    return `${months} ${monthText} ago`;
+  }
+
+  if (diffInDays > 0) {
+    const dayText = diffInDays === 1 ? 'day' : 'days';
+    return `${diffInDays} ${dayText} ago`;
+  }
+  
+  const diffInMilliseconds = now.getTime() - dbDate.getTime();
+  const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+
+  if (diffInHours > 0) {
+    const hourText = diffInHours === 1 ? 'hour' : 'hours';
+    return `${diffInHours} ${hourText} ago`;
+  }
+
+  const minutes = diffInMinutes > 0 ? diffInMinutes : 1;
+  const minuteText = minutes === 1 ? 'minute' : 'minutes';
+  return `${minutes} ${minuteText} ago`;
 }
 
 // 컴포넌트가 화면에 마운트될 때 함수를 실행
@@ -369,4 +399,26 @@ onMounted(() => {
     height: 120px; /* 원하는 높이로 조절 */
     object-fit: cover; /* 이미지가 비율을 유지하며 꽉 차게 */
 }
+
+.product-card {
+  position: relative; /* 배지를 올바르게 배치하기 위해 필요 */
+}
+
+.sold-out-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.7); /* 반투명 검정 배경 */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 10; /* 다른 요소 위에 표시되도록 */
+}
+
+.custom-margin-top {
+  margin-top: 5rem;
+}
+
 </style>

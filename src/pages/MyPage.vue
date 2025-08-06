@@ -182,6 +182,10 @@ import api from '@/api'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
+
+import { storeToRefs } from 'pinia'
+
+
 import { storeToRefs } from 'pinia'
 
 import { useRouter } from 'vue-router'
@@ -193,6 +197,8 @@ const myProducts = ref([])
 const wishlistItems = ref([])
 const placeholder = '/placeholder.svg'
 const { isLogin } = storeToRefs(authStore)
+
+
 
 
 const goToSellpage = () => {

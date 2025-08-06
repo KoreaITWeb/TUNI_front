@@ -4,7 +4,7 @@
     <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
       <div>
         <h6 class="mb-0">{{ getOtherUserName() }}</h6>
-        <small class="text-muted">게시글 #{{ props.room.boardId }}</small>
+        <small class="text-muted">{{ props.title }}</small>
       </div>
       <button 
         class="btn btn-outline-danger btn-sm" 
@@ -102,7 +102,7 @@ import { ref, computed ,watch, nextTick } from 'vue'
 import { useChatStore } from '@/stores/chat'
 const chatStore = useChatStore()
 
-const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected'])
+const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected', 'title'])
 
 const message = ref('')
 const chatArea = ref(null)
@@ -153,7 +153,7 @@ function handleClick(){
 }
 
 const sendMessage = () => {
-  
+  chatStore.markRoomAsRead(props.room.chatId)
   if (!message.value.trim()) return
   
   const messageData = {

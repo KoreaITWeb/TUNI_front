@@ -12,9 +12,7 @@
                 :alt="user.name"
                 class="profile-avatar"
               >
-              <div class="verification-badge">
-                <Check class="verification-icon" />
-              </div>
+              
             </div>
             <div class="profile-details">
               <h2 class="profile-name">{{ user.name }}</h2>
@@ -176,7 +174,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { 
-  Check, Star, Plus, Edit, Heart, 
+  Star, Plus, Edit, Heart, 
   Package, MessageSquare, ShoppingCart 
 } from 'lucide-vue-next'
 import '@/assets/styles/pages/Mypage.css'
@@ -227,6 +225,27 @@ async function loadWishlist(userId) {
   }
 }
 
+async function fetchProfileImage(userId) {
+  try {
+    const token = authStore.accessToken
+    const res = await axios.get(`/api/mypage/profile/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      responseType: 'blob'
+    })
+
+    if (res.data) {
+      user.profileImage = URL.createObjectURL(res.data)
+    } else {
+      user.profileImage = placeholder
+    }
+  } catch (err) {
+    console.error('프로필 이미지 불러오기 실패:', err)
+    user.profileImage = placeholder
+  }
+}
+
 // 예: 판매중, 판매완료 상태별 카운트 업데이트 함수
 function updateSaleStatusStats() {
   stats.selling = myProducts.value.filter(p => p.saleStatus === 'SALE').length;
@@ -260,6 +279,8 @@ async function loadMyPageData(userId) {
     console.log('판매중 상품 개수:', stats.selling)
     console.log('상품 목록:', myProducts.value)
     console.log('업데이트된 user 객체:', user)
+    // ✅ 프로필 이미지도 같이 불러오기
+    await fetchProfileImage(userId)
   } catch (err) {
     console.error('내가 등록한 상품 데이터 로딩 실패:', err)
   }

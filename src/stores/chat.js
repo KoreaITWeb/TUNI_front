@@ -52,7 +52,9 @@ export const useChatStore = defineStore('chat', () => {
   const totalUnreadCount = ref(0)
   const currentViewingRoomId = ref(null)
   const isInitialLoadComplete = ref(false)
-  const title = ref('good')
+  const boardNumber = ref('');
+  
+  
   // const title =ref('')
   
   // WebSocket 관련
@@ -61,6 +63,11 @@ export const useChatStore = defineStore('chat', () => {
   let roomsSubscription = null
   
   const API_BASE = "/api/chat"
+
+  const getBoardProduct = computed(() => {
+    
+    return boardNumber
+  })
 
   // Computed - 총 읽지 않은 메시지 수
   const unreadMessagesCount = computed(() => {
@@ -594,11 +601,13 @@ const getPendingRoom = () => {
     totalUnreadCount,
     currentViewingRoomId,
     isInitialLoadComplete,
+    boardNumber,
     
     // Computed
     unreadMessagesCount,
     hasUnreadMessages,
     sortedChatRooms,
+    getBoardProduct,
     
     // 액션
     connectGlobalWebSocket,
@@ -615,6 +624,6 @@ const getPendingRoom = () => {
     quitRoom,
     subscribeToChatRoom,
     setPendingRoom,
-    getPendingRoom
+    getPendingRoom,
   }
 })

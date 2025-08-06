@@ -267,7 +267,7 @@ async function fetchProducts() {
     if (!currentIsLogin || !currentUserId || !currentSchoolId) {
       error.value = '로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.';
       isLoading.value = false;
-      alert('로그인 후 이용가능합니다.');
+      alert('Please log in to continue.');
       router.push('/login');
       return;
     }

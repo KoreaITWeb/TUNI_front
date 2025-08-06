@@ -1,12 +1,12 @@
 <template>
   <div class="login-page">
     <main class="login-main">
-      <form class="login-form" @submit.prevent="onButtonClick">
+      <form class="login-form" @submit.prevent="onButtonClick" novalidate>
 
         <!-- ✅ 1. 대학교 선택 -->
-        <label for="university">대학교 선택</label>
-        <select id="university" v-model="universityId" required :disabled="showCodeInput">
-          <option value="">-- 대학교를 선택하세요 --</option>
+        <label for="university">University</label>
+        <select id="university" v-model="universityId" :disabled="showCodeInput" required>
+          <option value="">-- Select University --</option>
           <option
             v-for="uni in universities"
             :key="uni.schoolId"
@@ -71,13 +71,17 @@ onMounted(async () => {
     universities.value = response.data
   } catch (err) {
     console.error('학교 목록 불러오기 실패:', err)
-    alert('학교 목록을 불러오는 데 실패했습니다.')
+    alert('Failed to load university list.')
   }
 })
 
 async function onButtonClick() {
   if (!universityId.value) {
-    alert('대학교를 선택해주세요.')
+    alert('Please select your university.')
+    return
+  }
+  if (!email.value) {
+    alert('Please enter your email.')
     return
   }
 
@@ -91,15 +95,19 @@ async function onButtonClick() {
       })
 
       if (response.status === 200) {
-        alert(`인증 코드가 ${email.value}로 전송되었습니다.`)
+        alert(`A verification code has been sent to ${email.value}.`)
         showCodeInput.value = true
       }
     } catch (err) {
       console.error('코드 전송 실패:', err)
-      alert(err.response?.data?.message || '코드 전송에 실패했습니다.')
+      alert('Could not send verification code.')
     }
   } else {
     // 코드 인증
+    if (!code.value) {
+      alert('Please enter verification code.')
+      return
+    }
     try {
       const response = await axios.post('/api/auth/code/verify', {
         email: email.value,
@@ -110,17 +118,17 @@ async function onButtonClick() {
       const result = response.data
 
       if (result.isNewUser) {
-        alert('신규 회원입니다. 닉네임 설정 페이지로 이동합니다.')
+        alert('Welcome! Redirecting to nickname setup.')
         router.push(`/register-form?email=${email.value}&code=${code.value}`)
       } else {
         // login 함수 호출하여 상태 업데이트 및 localStorage 저장
         authStore.login(result.token); 
-        alert('로그인 성공!');
+        alert('Login successful!');
         router.push('/main');
       }
     } catch (err) {
       console.error('코드 인증 실패:', err)
-      alert(err.response?.data?.message || '코드 인증에 실패했습니다.')
+      alert('Invalid code. Please check and try again. ')
     }
   }
 }

@@ -43,8 +43,8 @@
                   'bg-gray-300 text-gray-800': product.saleStatus === 'SOLD' 
                 }"
               >
-                <option class="bg-white text-black" value="SALE">판매중</option>
-                <option class="bg-white text-black" value="SOLD">판매완료</option>
+                <option class="bg-white text-black" value="SALE">For Sale</option>
+                <option class="bg-white text-black" value="SOLD">Sold</option>
               </select>
             </div>
 
@@ -56,28 +56,28 @@
                   'bg-gray-300 text-gray-800': product.saleStatus === 'SOLD' 
                 }"
               >
-                {{ product.saleStatus === 'SALE' ? '판매중' : '판매완료' }}
+                {{ product.saleStatus === 'SALE' ? 'For Sale' : 'SOLE' }}
               </span>
             </div>
           </div>
 
           <div class="description flex-grow mb-6">
-            <h5 class="font-bold text-lg mb-2">상품 설명</h5>
+            <h5 class="font-bold text-lg mb-2">Description</h5>
             <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ product.content }}</p>
           </div>
           <div class="flex justify-end items-center gap-2 mb-2 text-xs text-gray-500">
-            <p>좋아요 {{ likeCount }}</p>
+            <p>Likes {{ likeCount }}</p>
             <span class="text-gray-400">&middot;</span>
-            <p>조회수 {{ product.views }}</p>
+            <p>Views {{ product.views }}</p>
           </div>
           <hr>
           <div class="action-buttons flex gap-4 mt-auto pt-6">
             <template v-if="isOwner">
                 <button @click="editProduct" class="flex-1 btn btn-secondary">
-                    수정하기
+                    Edit
                 </button>
                 <button @click="deleteProduct" class="flex-1 btn btn-danger">
-                    삭제하기
+                    Delete
                 </button>
             </template>
             
@@ -88,7 +88,7 @@
                   :class="isLikedByUser ? 'btn-danger' : 'btn-outline-danger'"
                 >
                   <span>❤️</span>
-                  <span class="font-semibold">좋아요</span>
+                  <span class="font-semibold">Like</span>
                 </button>
                  <button 
                   @click="startChat" 
@@ -168,12 +168,12 @@ const connectWebSocket = () => {
 // 채팅하기 버튼 클릭 시 실행
 const startChat = async () => {
   if (!loggedInUserId.value) {
-    alert('로그인이 필요합니다.');
+    alert('Please log in to continue.');
     return;
   }
   
   if (isOwner.value) {
-    alert('자신의 상품과는 채팅할 수 없습니다.');
+    alert('You cannot chat about your own item.');
     return;
   }
   
@@ -273,7 +273,7 @@ const startChat = async () => {
     
   } catch (error) {
     // console.error('채팅방 생성 중 오류:', error);
-    alert('채팅방 생성에 실패했습니다. 다시 시도해주세요.');
+    alert('Failed to create chat room.');
   } finally {
     chatLoading.value = false;
   }
@@ -288,7 +288,7 @@ function editProduct() {
 async function deleteProduct() {
   if (!isOwner.value) return; // 주인이 아니면 실행 방지
 
-  if (confirm('정말로 이 상품을 삭제하시겠습니까?')) {
+  if (confirm('Are you sure you want to delete this item?')) {
     try {
       // 백엔드에 DELETE 요청 보내기 (API 경로는 예시입니다)
       await api.delete(`/board/${productId.value}`,
@@ -298,11 +298,11 @@ async function deleteProduct() {
           }
         }
       );
-      alert('상품이 삭제되었습니다.');
+      alert('Item has been deleted.');
       router.push('/shop'); // 삭제 후 목록 페이지로 이동
     } catch (err) {
       // console.error('상품 삭제 실패:', err);
-      alert('상품 삭제에 실패했습니다.');
+      alert('Failed to delete item.');
     }
   }
 }
@@ -347,7 +347,7 @@ async function fetchProductDetails(id) {
 
   } catch (err) {
     console.error('상품 상세 정보 로딩 실패:', err);
-    error.value = err.response?.data?.message || '상품 정보를 불러올 수 없습니다.';
+    console.log('Could not load product information.')
   } finally {
     isLoading.value = false;
   }
@@ -368,10 +368,10 @@ async function updateStatus() {
         }
       }
     );
-    alert('판매 상태가 변경되었습니다.');
+    alert('Sale status has been updated.');
   } catch (err) {
     console.error('상태 변경 실패:', err);
-    alert(err.response?.data?.message || '상태 변경에 실패했습니다.');
+    alert('Failed to update status.');
     // 실패 시, 화면의 상태를 원래대로 되돌리기 위해 페이지를 새로고침
     location.reload();
   }
@@ -389,9 +389,7 @@ async function toggleLike() {
       headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
     });
   } catch (err) {
-    console.error('좋아요 처리 실패:', err);
     // 실패 시 UI를 원래 상태로 되돌림
-    alert('요청에 실패했습니다.');
     isLikedByUser.value = !isLikedByUser.value;
     likeCount.value += isLikedByUser.value ? 1 : -1;
   }

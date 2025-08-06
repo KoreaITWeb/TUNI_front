@@ -5,14 +5,14 @@
 
       <div class="space-y-4">
         <div>
-          <label for="title" class="form-label font-semibold">Item Name</label>
-          <input v-model="title" id="title" placeholder="제목" class="form-control" required/>
+          <label for="title" class="form-label font-semibold">Title</label>
+          <input v-model="title" id="title" placeholder="title" class="form-control" required/>
         </div>
 
         <div>
           <label for="category" class="form-label font-semibold">Category</label>
           <select v-model="category" id="category" class="form-select" required>
-            <option value="" disabled>-- 카테고리를 선택하세요 --</option>
+            <option value="" disabled>-- Select Category --</option>
             <option v-for="cat in categories" :key="cat" :value="cat">
               {{ cat }}
             </option>
@@ -21,18 +21,17 @@
 
         <div>
           <label for="price" class="form-label font-semibold">Price</label>
-          <input v-model="price" id="price" placeholder="가격" type="number" class="form-control" required/>
+          <input v-model="price" id="price" placeholder="Price" type="number" class="form-control" required/>
         </div>
         
         <div>
           <label for="content" class="form-label font-semibold">Description</label>
-          <textarea v-model="content" id="content" placeholder="설명" class="form-control" rows="4" required></textarea>
+          <textarea v-model="content" id="content" placeholder="Description" class="form-control" rows="4" required></textarea>
         </div>
         
         <div v-if="isEditMode" class="space-y-4">
           <div>
             <label class="form-label font-semibold">Photos</label>
-            <p class="text-sm text-gray-500">대표 이미지를 클릭하여 변경하고, X 버튼으로 삭제하세요.</p>
             <div class="flex flex-wrap gap-4 mt-2">
               <div v-for="image in existingImages" :key="image.uuid"
                    class="relative cursor-pointer border-3 rounded-lg overflow-hidden transition-all"
@@ -68,8 +67,7 @@
         
         <div v-else>
           <label for="photo" class="form-label font-semibold">Photo</label>
-          <input type="file" @change="handleFileUpload" multiple accept="image/*" class="form-control"/>
-          <p v-if="newImagePreviews.length > 0" class="text-sm text-gray-500">대표 이미지로 사용할 사진을 클릭하세요.</p>
+          <input type="file" @change="handleFileUpload" multiple accept="image/*" class="form-control" required/>
           <div v-if="newImagePreviews.length > 0" class="flex flex-wrap gap-4 mt-2">
             <div
               v-for="(image, index) in newImagePreviews" :key="index"
@@ -171,7 +169,7 @@ async function fetchProductForEdit() {
     
   } catch (err) {
     console.error('상품 정보 로딩 실패:', err);
-    alert('기존 상품 정보를 불러오는 데 실패했습니다.');
+    alert('Failed to load product details.');
     router.push('/shop');
   }
 }
@@ -198,7 +196,7 @@ function deleteExistingImage(uuid) {
 
 onMounted(() => {
   if (!isLogin.value) {
-    alert('로그인 후 이용가능합니다.');
+    alert('Please log in to continue.');
     router.push('/login');
   }
   fetchProductForEdit();
@@ -233,7 +231,7 @@ async function submitItem() {
       const remainingImageCount = existingImages.value.length;
       const newImageCount = newFiles.value.length;
       if (remainingImageCount + newImageCount === 0) {
-        alert('최소 한 개 이상의 이미지가 필요합니다.');
+        alert('At least one image is required.');
         return;
       }
       
@@ -286,16 +284,16 @@ async function submitItem() {
         }
       }
 
-      alert('상품 수정을 완료하였습니다.');
+      alert('Item updated successfully.');
       router.push(`/details/${productId.value}`); // 수정 후 상세 페이지로 이동
     } catch (err) {
       console.error('상품 수정 실패:', err);
-      alert('상품 수정에 실패하였습니다.');
+      alert('Failed to update item.');
     }
   }
   else{
     if (!title.value || !category.value || !price.value || !content.value) {
-      alert('모든 필드를 입력해주세요.');
+      alert('Please fill out all fields.');
       return;
     }
 
@@ -333,12 +331,12 @@ async function submitItem() {
         }
       }
 
-      alert('상품 등록을 완료하였습니다.');
+      alert('Item listed successfully.');
       router.push('/shop');
 
     } catch (err) {
       console.log('상품등록 실패:', err);
-      alert('상품 등록 실패하였습니다.');
+      alert('Failed to list item.');
     }
   }
 }

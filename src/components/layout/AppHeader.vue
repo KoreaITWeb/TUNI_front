@@ -33,13 +33,6 @@
         
         <!-- 우측 아이콘 + 로그인 -->
         <div class="flex items-center space-x-4">
-          <button class="p-2 hover:bg-gray-100 rounded-full">
-            <Bell class="w-5 h-5 text-gray-700" />
-          </button>
-          <button class="p-2 hover:bg-gray-100 rounded-full">
-            <Settings class="w-5 h-5 text-gray-700" />
-          </button>
-
           <div>
             <template v-if="authStore.isLogin">
               <div class="flex items-center space-x-2">
@@ -49,7 +42,7 @@
                   alt="프로필 사진" 
                   class="w-8 h-8 rounded-full object-cover"
                 />
-                <span class="text-sm font-medium text-gray-800 mr-2">{{ authStore.userId }}님</span>
+                <span class="text-sm font-medium text-gray-800 mr-2">{{ authStore.userId }}</span>
                 <button @click="logout" class="text-sm text-red-500 hover:underline">Logout</button>
               </div>
               
@@ -66,7 +59,6 @@
 
 <script setup>
 import logoTuni from '@/assets/logo-tuni-icon.png'
-import { Bell, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
@@ -84,7 +76,7 @@ const unreadCount = computed(() => chatStore.unreadMessagesCount)
 async function fetchProfileImage(userId) {
   try {
     const token = authStore.accessToken;  // <-- 여기 수정
-    const res = await axios.get(`/api/mypage/profile/${userId}`, {
+    const res = await axios.get(`/api/mypage/${userId}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -162,9 +154,8 @@ function logout() {
   chatStore.disconnectGlobalWebSocket()
   
   authStore.logout()
-  alert('로그아웃되었습니다.')
-  router.push('/login')
-  router.push('/login')
+  alert('You have been logged out.')
+  router.push('/main')
 }
 </script>
 

@@ -1,58 +1,48 @@
 <template>
   <div class="main-page">
     <!-- Hero Section -->
-    <section class="hero-section">
-      <div class="hero-container">
-        <div class="hero-content">
-          <div class="hero-text">
-            <h1 class="hero-title">
-              Trade <span class="hero-highlight">University</span>
-            </h1>
-            <p class="hero-description">
-              Start trading with students on the same campus.<br />
-            </p>
-            <div class="hero-actions">
-              <button class="btn-primary btn-large" @click="handleGoShop">
-                <Search class="btn-icon" />
-                Go Shop
-              </button>
-              <button class="btn-secondary btn-large" @click="handleAddProduct">
-                <Plus class="btn-icon" />
-                Add Product
-              </button>
-            </div>
-            <!-- ✅ 실시간 통계 표시 -->
-            <div class="hero-stats">
-              <div class="stat-item">
-                <span class="stat-number">{{ stats.productCount }}</span>
-                <span class="stat-label">Listed Items</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">{{ stats.userCount }}</span>
-                <span class="stat-label">Signed-up Students</span>
-              </div>
-            </div>
+    <section class="w-full bg-gradient-to-br from-blue-50 via-white to-blue-100 py-24 sm:py-32">
+      <div class="container mx-auto px-6 text-center">
+        
+        <div class="max-w-3xl mx-auto">
+          <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+            Trade within your
+            <span class="text-blue-600">University Campus</span>
+          </h1>
+          <p class="mt-6 text-lg leading-8 text-gray-600">
+            Start safe and convenient second-hand trading with authenticated fellow students.
+          </p>
+          <div class="mt-10 flex items-center justify-center gap-x-6">
+            <button class="btn-primary btn-large flex items-center gap-2 bg-blue-600 hover:bg-blue-700" @click="handleGoShop">
+              <Search class="btn-icon" />
+              <span>Go Shop</span>
+            </button>
+            <button class="btn-secondary btn-large flex items-center gap-2" @click="handleAddProduct">
+              <Plus class="btn-icon" />
+              <span>Sell Product</span>
+            </button>
           </div>
-
-          <!-- Hero 이미지 카드 -->
-          <div class="mt-10 lg:mt-0">
-            <div class="flex items-center justify-center">
-              <img
-                :src="logoTuni"
-                alt="대학생 중고거래 로고"
-                class="w-[220px] object-contain"
-                />
+          
+          <div class="mt-16 flex justify-center gap-8 lg:gap-16">
+            <div class="flex flex-col items-center">
+              <span class="text-3xl font-bold tracking-tight text-gray-900">{{ stats.productCount.toLocaleString() }}</span>
+              <span class="mt-1 text-sm font-medium text-gray-500">Listed Items</span>
+            </div>
+            <div class="flex flex-col items-center">
+              <span class="text-3xl font-bold tracking-tight text-gray-900">{{ stats.userCount.toLocaleString() }}</span>
+              <span class="mt-1 text-sm font-medium text-gray-500">Signed-up Students</span>
             </div>
           </div>
         </div>
-      </div>
+
+        </div>
     </section>
 
     <!-- Latest Products Section -->
     <section class="products-section">
       <div class="section-container">
         <div class="section-header flex items-center">
-          <h2 class="section-title">Recent Register Products</h2>
+          <h2 class="section-title">Recently Listed Products</h2>
           <button 
             class="btn-text ml-auto flex items-center gap-1 flex-nowrap" 
             @click="handleViewMore"
@@ -68,7 +58,7 @@
     <div
       v-for="product in latestProducts.slice(0, 4)"
       :key="product.boardId"
-      class="product-card cursor-pointer"
+      class="product-card cursor-pointer transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1"
       @click="goToDetail(product.boardId)"
     >
       <div class="product-image-container">
@@ -81,7 +71,7 @@
       <div class="product-info">
         <h3 class="product-title">{{ product.title }}</h3>
         <p class="product-price">
-          {{ product.price.toLocaleString() }}원
+          $ {{ product.price.toLocaleString() }}
         </p>
         <div class="product-meta">
           <span v-if="!isLogin" class="product-location">{{ product.schoolName }}</span>
@@ -105,7 +95,6 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api';
 import '@/assets/styles/pages/Mainpage.css'
-import logoTuni from '@/assets/logo-tuni.png'
 import { storeToRefs } from 'pinia';
 
 import {
@@ -121,7 +110,7 @@ const { isLogin } = storeToRefs(authStore);
 // --- 로그인 확인 및 라우팅 함수 ---
 function handleGoShop() {
   if (!isLogin.value) {
-    alert('로그인 후 이용 가능합니다.');
+    alert('Please log in to continue.');
     router.push('/login');
     return;
   }
@@ -130,7 +119,8 @@ function handleGoShop() {
 
 function handleAddProduct() {
   if (!isLogin.value) {
-    alert('로그인 후 이용 가능합니다.');
+    alert('Please log in to continue.');
+    router.push('/login');
     return
   }
   router.push('/Sell');
@@ -138,7 +128,8 @@ function handleAddProduct() {
 
 function handleViewMore() {
   if (!isLogin.value) {
-    alert('로그인 후 이용 가능합니다.');
+    alert('Please log in to continue.');
+    router.push('/login');
     return
   }
   router.push('/Shop');
@@ -176,7 +167,7 @@ async function fetchLatestProducts() {
 // --- 이벤트 핸들러 ---
 function goToDetail(productId) {
   if (!isLogin.value) {
-    alert('로그인이 필요한 기능입니다.');
+    alert('Please log in to continue.');
     return;
   }
   router.push(`/details/${productId}`);

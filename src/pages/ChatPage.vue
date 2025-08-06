@@ -20,7 +20,7 @@
           :messages="messages"
           :currentUserId="currentUserId"
           :isConnected="isConnected"
-          :title="title"
+          :boardNumber="boardNumber"
           @sendMessage="sendMessage"
           @quitRoom="quitChatRoom"
         />
@@ -31,7 +31,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ChatList from '@/components/chat/ChatList.vue'
 import ChatDetail from '@/components/chat/ChatDetail.vue'
 import { useChatStore } from '@/stores/chat'
@@ -41,11 +41,12 @@ import api from '@/api'
 
 const API_BASE = "/api/chat"
 const route = useRoute()
+const router = useRouter()
 
 // Store 사용
 const chatStore = useChatStore()
 const authStore = useAuthStore()
-const { userId: loggedInUserId } = storeToRefs(authStore)
+const { userId: loggedInUserId, isLogin } = storeToRefs(authStore)
 
 // 로컬 상태 (ChatPages 전용)
 const selectedRoom = ref(null)
@@ -73,7 +74,9 @@ const currentUserId = computed(() => chatStore.currentUserId || authStore.userId
 const isConnected = computed(() => chatStore.isConnected)
 const chatRooms = computed(() => chatStore.chatRooms)
 const lastMessages = computed(() => chatStore.lastMessages)
-const title = computed(() => chatStore.title)
+const boardNumber = computed(() => chatStore.boardNumber)
+
+
 chatStore.chatRooms.forEach(room => {
   // console.log(`Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
 })
@@ -145,10 +148,7 @@ const subscribeToChatRoom = (chatId) => {
 
 // 채팅방 목록 불러오기
 const loadChatRoomsByUser = async (userId) => {
-  if (!userId) {
-    alert("사용자 ID를 입력하세요.")
-    return
-  }
+  
 
   // console.log('🔍 ChatPages - 채팅방 목록 로드 요청')
   
@@ -212,13 +212,13 @@ const handleAutoSelectRoom = async () => {
 // 채팅방 생성
 const createChatRoom = (roomData) => {
   if (!chatStore.isConnected) {
-    alert("WebSocket 연결 중입니다. 잠시 후 다시 시도해주세요.")
+    alert("try later.")
     return
   }
 
   const success = chatStore.createRoom(roomData)
   if (!success) {
-    alert("채팅방 생성에 실패했습니다.")
+    alert("Failed to make ChatRoom")
   }
 }
 
@@ -227,8 +227,12 @@ const selectRoom = async (room) => {
   // console.log('🔍 채팅방 선택:', room)
   selectedRoom.value = room
   messages.value = []
+  boardNumber.value = room.boardId;
 
   try {
+  
+
+
     // 기존 메시지 로드
     const res = await api.post(`${API_BASE}/messages`, {
       chatId: room.chatId
@@ -280,7 +284,7 @@ const selectRoom = async (room) => {
       } else if (attempts >= maxAttempts) {
         // console.error('🔍 WebSocket 연결 타임아웃 - 실시간 채팅 불가능')
         clearInterval(checkConnection)
-        alert('채팅 연결에 실패했습니다. 페이지를 새로고침해주세요.')
+        alert('Failed to connect ChatRoom')
       }
     }, 100)
   }
@@ -292,13 +296,13 @@ const sendMessage = async (messageData) => {
   
   if (!chatStore.isConnected) {
     // console.error('🔍 WebSocket이 연결되어 있지 않습니다.')
-    alert("WebSocket이 연결되어 있지 않습니다.")
+    alert("Connected Error")
     return
   }
 
   if (!selectedRoom.value) {
     // console.error('🔍 선택된 채팅방이 없습니다.')
-    alert("채팅방을 선택해주세요.")
+    alert("Select Your ChatRoom")
     return
   }
 
@@ -325,23 +329,23 @@ const sendMessage = async (messageData) => {
     if (success) {
       // console.log('🔍 메시지 전송 완료')
     } else {
-      throw new Error('메시지 전송 실패')
+      throw new Error('Failed to send messages')
     }
   } catch (error) {
     // console.error('🔍 메시지 전송 실패:', error)
-    alert('메시지 전송에 실패했습니다. 다시 시도해주세요.')
+    alert('ailed to send messages. Try again.')
   }
 }
 
 // 채팅방 나가기
 const quitChatRoom = async () => {
   if (!selectedRoom.value || !currentUserId.value) {
-    alert('나갈 채팅방이 선택되지 않았습니다.')
+    alert('Select the ChatRoom to quit')
     return
   }
 
   if (!chatStore.isConnected) {
-    alert('WebSocket이 연결되어 있지 않습니다. 잠시 후 다시 시도해주세요.')
+    alert('Try again.')
     return
   }
 
@@ -371,12 +375,12 @@ const quitChatRoom = async () => {
       
       // alert('채팅방에서 나갔습니다.')
     } else {
-      throw new Error('채팅방 나가기 실패')
+      throw new Error('Failed to quit')
     }
 
   } catch (error) {
     // console.error('채팅방 나가기 실패:', error)
-    alert('채팅방 나가기에 실패했습니다. 다시 시도해주세요.')
+    alert('Failed to quit. Try again.')
     
     // 실패 시 채팅방 목록 다시 로드
     if (currentUserId.value) {
@@ -406,7 +410,7 @@ const handleRoomQuitEvent = (event) => {
       // 상대방이 나간 경우 - 시스템 메시지 추가
       const systemMessage = {
         chatId: quitInfo.chatId,
-        content: quitInfo.systemMessage || `${quitInfo.userId}님이 채팅방을 나갔습니다.`,
+        content: quitInfo.systemMessage || `${quitInfo.userId} leaved Chat`,
         regdate: new Date().toISOString(),
         userId: 'system',
         boardId: selectedRoom.value.boardId
@@ -418,7 +422,7 @@ const handleRoomQuitEvent = (event) => {
       // 채팅방 상태 업데이트
       selectedRoom.value.isOtherUserLeft = true
       
-      alert('상대방이 채팅방을 나갔습니다.')
+      // alert('상대방이 채팅방을 나갔습니다.')
     } else {
       // 내가 나간 경우
       if (currentChatSubscription) {
@@ -475,6 +479,10 @@ const handleCheckCurrentRoom = (event) => {
 
 // 컴포넌트 마운트 시 초기화
 onMounted(async () => {
+  if (!isLogin.value) {
+    alert('로그인 후 이용가능합니다.');
+    router.push('/login');
+  }
   // console.log('🔍 ChatPages 마운트됨')
   
   // 로그인된 사용자 ID 설정

@@ -50,11 +50,11 @@
 
           <!-- Quick Actions -->
           <div class="quick-actions">
-            <button class="btn-primary">
+            <button class="btn-primary" @click="goToSellpage">
               <Plus class="btn-icon" />
               상품 등록
             </button>
-            <button class="btn-secondary">
+            <button class="btn-secondary" @click="goToProfileUpdate">
               <Edit class="btn-icon" />
               프로필 수정
             </button>
@@ -181,12 +181,24 @@ import '@/assets/styles/pages/Mypage.css'
 import api from '@/api'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const activeMenu = ref('wishlist')
 const myProducts = ref([])
 const wishlistItems = ref([])
 const placeholder = '/placeholder.svg'
+const { isLogin } = storeToRefs(authStore)
+
+const goToSellpage = () => {
+  router.push('/Sell')
+}
+
+const goToProfileUpdate = () => {
+  router.push('/ProfileUpdate')
+}
 
 const user = reactive({
   name: '',
@@ -224,7 +236,7 @@ async function loadWishlist(userId) {
 async function fetchProfileImage(userId) {
   try {
     const token = authStore.accessToken
-    const res = await axios.get(`/api/mypage/profile/${userId}`, {
+    const res = await axios.get(`/api/mypage/${userId}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -284,6 +296,10 @@ async function loadMyPageData(userId) {
 
 // 컴포넌트 마운트 시 찜한 상품과 내가 등록한 상품 모두 불러오기
 onMounted(async () => {
+  if (!isLogin.value) {
+    alert('로그인 후 이용가능합니다.');
+    router.push('/login');
+  }
   const userId = authStore.userId
   const schoolId = authStore.schoolId
   console.log("현재 저장된 userId: ", userId)

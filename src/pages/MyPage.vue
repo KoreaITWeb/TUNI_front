@@ -181,6 +181,10 @@ import '@/assets/styles/pages/Mypage.css'
 import api from '@/api'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+<<<<<<< HEAD
+=======
+import { storeToRefs } from 'pinia'
+>>>>>>> 3f3668d5b3e0e370b8af30543f0b7f9180e73c5d
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -189,6 +193,8 @@ const activeMenu = ref('wishlist')
 const myProducts = ref([])
 const wishlistItems = ref([])
 const placeholder = '/placeholder.svg'
+const { isLogin } = storeToRefs(authStore)
+const router = useRouter()
 
 const goToSellpage = () => {
   router.push('/Sell')
@@ -294,6 +300,10 @@ async function loadMyPageData(userId) {
 
 // 컴포넌트 마운트 시 찜한 상품과 내가 등록한 상품 모두 불러오기
 onMounted(async () => {
+  if (!isLogin.value) {
+    alert('로그인 후 이용가능합니다.');
+    router.push('/login');
+  }
   const userId = authStore.userId
   const schoolId = authStore.schoolId
   console.log("현재 저장된 userId: ", userId)

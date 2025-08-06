@@ -131,6 +131,7 @@ function handleGoShop() {
 function handleAddProduct() {
   if (!isLogin.value) {
     alert('로그인 후 이용 가능합니다.');
+    router.push('/login');
     return
   }
   router.push('/Sell');
@@ -139,6 +140,7 @@ function handleAddProduct() {
 function handleViewMore() {
   if (!isLogin.value) {
     alert('로그인 후 이용 가능합니다.');
+    router.push('/login');
     return
   }
   router.push('/Shop');

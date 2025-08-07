@@ -192,6 +192,9 @@ const wishlistItems = ref([])
 const placeholder = '/placeholder.svg'
 const { isLogin } = storeToRefs(authStore)
 
+
+
+
 const goToSellpage = () => {
   router.push('/Sell')
 }
@@ -263,7 +266,12 @@ function updateSaleStatusStats() {
 // 내가 등록한 상품 및 user 정보, stats.selling 업데이트 함수
 async function loadMyPageData(userId) {
   try {
+    console.log('loadMyPageData 호출 - userId:', userId)
+    console.log("프론트에서 서버에 요청 보내는 userId:", userId);
+
     const res = await api.get(`/api/mypage/${userId}`)
+    console.log("프론트에서 서버에 요청 보내는 userId:", userId);
+
     console.log(res.data.saleCount);  // 판매중
     console.log(res.data.soldCount)
     console.log('API 응답 데이터:', res.data)
@@ -325,7 +333,16 @@ watch(activeMenu, async (newVal) => {
     await loadMyPageData(userId)
   }
 })
-
+watch(
+  () => authStore.userId,
+  async (newUserId, oldUserId) => {
+    if (newUserId && newUserId !== oldUserId) {
+      console.log('✅ userId 변경 감지:', oldUserId, '→', newUserId)
+      await loadWishlist(newUserId)
+      await loadMyPageData(newUserId)
+    }
+  }
+)
 const menuItems = computed(() => [
   { id: 'wishlist', title: '찜한목록', count: `${wishlistItems.value.length}개`, icon: Heart },
   { id: 'myItems', title: '내가 등록한 상품', count: `${myProducts.value.length}개`, icon: Package },

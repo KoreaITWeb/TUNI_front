@@ -42,7 +42,7 @@
                   alt="프로필 사진" 
                   class="w-8 h-8 rounded-full object-cover"
                 />
-                <span class="text-sm font-medium text-gray-800 mr-2">{{ authStore.userId }}</span>
+                <span class="text-sm font-medium text-gray-800 mr-2">{{ userId }}</span>
                 <button @click="logout" class="text-sm text-red-500 hover:underline">Logout</button>
               </div>
               
@@ -64,8 +64,11 @@ import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
+import { storeToRefs } from 'pinia'
 
 const authStore = useAuthStore()
+const { userId } = storeToRefs(authStore)
+console.log('헤더에서 userId:', userId.value);
 const chatStore = useChatStore()
 const router = useRouter()
 

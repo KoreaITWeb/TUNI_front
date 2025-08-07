@@ -144,22 +144,26 @@
             }
 
             const updateData = {
-            userId: nickname.value.trim(),
-            profileImg: profileImgUrl ?? null  // undefined 방지
+              userId: nickname.value.trim(),
+              profileImg: profileImgUrl ?? null  // undefined 방지
             }
 
             for (const [key, value] of Object.entries(updateData)) {
-            console.log('✅ 최종 전송 데이터:', key + ':', value)
+              console.log('✅ 최종 전송 데이터:', key + ':', value)
             }
 
             const updateRes = await api.put(`/api/mypage/${authStore.userId}/update`, updateData)
-            console.log('✅ 응답 결과:', updateRes.data)
+            console.log('프로필 수정 API 응답1:', updateRes.data)
 
             if (updateRes.data) {
-            alert('프로필이 수정되었습니다!')
-            router.push('/main')
+              alert('프로필이 수정되었습니다!')
+              //authStore.userId = updateData.userId 
+              console.log('프로필 수정 API 응답2:', updateRes.data)
+              authStore.login(updateRes.data)
+              console.log('프로필 수정 후 authStore.userId:', authStore.userId);
+              router.push('/main')
             } else {
-            alert('프로필 수정 중 오류가 발생했습니다.')
+              alert('프로필 수정 중 오류가 발생했습니다.')
             }
         } catch (err) {
             console.error('❌ 프로필 수정 실패:', err)

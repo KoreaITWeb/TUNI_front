@@ -52,12 +52,20 @@ function decodeJwt(token) {
         const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
-        return JSON.parse(jsonPayload);
+        const payload = JSON.parse(jsonPayload);
+
+        // userId 필드가 없으면 sub 필드를 userId로 설정
+        if (!payload.userId && payload.sub) {
+            payload.userId = payload.sub;
+        }
+
+        return payload;
     } catch (e) {
         console.error("Invalid token:", e);
         return null;
     }
 }
+
 
 export const useAuthStore = defineStore('auth', () => {
     // 1. 상태 (State)
@@ -90,7 +98,7 @@ export const useAuthStore = defineStore('auth', () => {
             localStorage.setItem('schoolId', payload.schoolId);
 
             isLogin.value = true;
-            userId.value = payload.userId;
+            userId.value = payload.userId || payload.sub;
             schoolId.value = payload.schoolId;
             accessToken.value = tokenDto.accessToken;
         }

@@ -38,10 +38,12 @@
               <div class="stat-number">{{ stats.sold }}</div>
               <div class="stat-label">판매완료</div>
             </div>
+            <!--
             <div class="stat-card stat-purchased">
               <div class="stat-number">{{ stats.purchased }}</div>
               <div class="stat-label">구매완료</div>
             </div>
+            -->
             <div class="stat-card stat-wishlist">
               <div class="stat-number">{{ stats.wishlist }}</div>
               <div class="stat-label">찜한상품</div>
@@ -60,8 +62,8 @@
             </button>
           </div>
         </div>
-
-        <!-- Recent Activity -->
+       
+        <!-- Recent Activity 
         <div class="recent-activity">
           <h3 class="section-title">최근 활동</h3>
           <div class="activity-grid">
@@ -95,8 +97,9 @@
             </div>
           </div>
         </div>
+         -->
       </div>
-
+     
       <!-- Navigation Menu -->
       <div class="navigation-menu">
         <button 
@@ -156,8 +159,6 @@
             </template>
           </div>
         </div>
-
-
         <div v-else-if="activeMenu === 'reviews'" class="content-section">
           <h3 class="content-title">리뷰</h3>
         </div>
@@ -346,8 +347,8 @@ watch(
 const menuItems = computed(() => [
   { id: 'wishlist', title: '찜한목록', count: `${wishlistItems.value.length}개`, icon: Heart },
   { id: 'myItems', title: '내가 등록한 상품', count: `${myProducts.value.length}개`, icon: Package },
-  { id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
-  { id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
+  //{ id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
+  //{ id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
 ])
 
 const recentItems = [

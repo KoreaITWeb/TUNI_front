@@ -87,91 +87,51 @@
     }
 
     const submitProfileUpdate = async () => {
-        if (!nickname.value.trim()) {
-            alert('닉네임을 입력해주세요.')
-            return
-        }
-
-        try {
-            isLoading.value = true
-
-            console.log('✅ 입력한 닉네임:', nickname.value)
-            console.log('✅ 기존 유저 ID:', authStore.userId)
-
-            if (!authStore.userId) {
-            alert('현재 로그인된 사용자가 없습니다.')
-            return
-            }
-
-            if (nickname.value.trim() !== authStore.userId) {
-            const checkRes = await api.get('/api/auth/check-nickname', {
-                params: { nickname: nickname.value.trim() }
-            })
-            console.log('✅ 닉네임 중복 체크 결과:', checkRes.data)
-            if (!checkRes.data.available) {
-                alert('이미 사용 중인 닉네임입니다.')
-                return
-            }
-            }
-
-            // 이미지 업로드 함수
-            async function uploadProfileImage(file, userId) {
-            if (!userId) {
-                throw new Error('userId가 없습니다.')
-            }
-
-            const formData = new FormData()
-            formData.append('image', file)
-
-            const res = await api.post(`/api/mypage/${userId}/profile`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            })
-
-            console.log('✅ 서버 업로드 응답:', res.data)
-
-            // 백엔드에서 'url' 속성을 반드시 내려주어야 함
-            return res.data?.url || null
-            }
-
-            let profileImgUrl = null
-            if (profileImg.value) {
-            profileImgUrl = await uploadProfileImage(profileImg.value, authStore.userId)
-            console.log('✅ 업로드된 이미지 URL:', profileImgUrl)
-            } else {
-            // 새로 업로드 안 한 경우, 기존 이미지 유지
-            profileImgUrl = previewImg.value || null
-            console.log('✅ 새 이미지 없음, 기존 previewImg 사용:', profileImgUrl)
-            }
-
-            const updateData = {
-              userId: nickname.value.trim(),
-              profileImg: profileImgUrl ?? null  // undefined 방지
-            }
-
-            for (const [key, value] of Object.entries(updateData)) {
-              console.log('✅ 최종 전송 데이터:', key + ':', value)
-            }
-
-            const updateRes = await api.put(`/api/mypage/${authStore.userId}/update`, updateData)
-            console.log('프로필 수정 API 응답1:', updateRes.data)
-
-            if (updateRes.data) {
-              alert('프로필이 수정되었습니다!')
-              //authStore.userId = updateData.userId 
-              console.log('프로필 수정 API 응답2:', updateRes.data)
-              authStore.login(updateRes.data)
-              console.log('프로필 수정 후 authStore.userId:', authStore.userId);
-              router.push('/main')
-            } else {
-              alert('프로필 수정 중 오류가 발생했습니다.')
-            }
-        } catch (err) {
-            console.error('❌ 프로필 수정 실패:', err)
-            alert(err.response?.data?.message || '프로필 수정 중 문제가 발생했습니다.')
-        } finally {
-            isLoading.value = false
-        }
+    if (!nickname.value.trim()) {
+      alert('닉네임을 입력해주세요.');
+      return;
     }
+
+    try {
+      isLoading.value = true;
+
+      // 1) 닉네임, 프로필 이미지 파일 FormData에 담기
+      const formData = new FormData();
+      formData.append('userId', nickname.value.trim());
+
+      if (profileImg.value) {
+        // 이미지 파일이 있으면 'profileImgFile' 키로 첨부
+        formData.append('profileImgFile', profileImg.value);
+      }
+
+      // 2) 프로필 수정 API에 multipart/form-data 요청 보내기
+      const updateRes = await api.put(
+        `/api/mypage/${authStore.userId}/update`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
+      );
+
+      console.log('프로필 수정 API 응답:', updateRes.data);
+
+      if (updateRes.data) {
+        alert('프로필이 수정되었습니다!');
+        authStore.login(updateRes.data);
+        console.log('authStore.profileImg:', authStore.profileImg)
+        router.push('/profile');
+      } else {
+        alert('프로필 수정 중 오류가 발생했습니다.');
+      }
+
+    } catch (err) {
+      console.error('❌ 프로필 수정 실패:', err);
+      alert(err.response?.data?.message || '프로필 수정 중 문제가 발생했습니다.');
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
 </script>
 
   

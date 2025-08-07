@@ -73,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
     const userId = ref('')
     const schoolId = ref(null)
     const accessToken = ref(localStorage.getItem('accessToken') || '')
-
+    const profileImg = ref('')
     // 2. 액션 (Actions) - 상태를 변경하는 함수들
     function checkLoginStatus() {
         const token = localStorage.getItem('accessToken');
@@ -84,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
                 userId.value = payload.userId;
                 schoolId.value = payload.schoolId;
                 accessToken.value = token;
+                profileImg.value = localStorage.getItem('profileImg') || ''
             }
         }
     }
@@ -96,11 +97,13 @@ export const useAuthStore = defineStore('auth', () => {
             localStorage.setItem('refreshToken', tokenDto.refreshToken);
             localStorage.setItem('userId', payload.userId);
             localStorage.setItem('schoolId', payload.schoolId);
+            localStorage.setItem('profileImg', tokenDto.profileImg || '')
 
             isLogin.value = true;
             userId.value = payload.userId || payload.sub;
             schoolId.value = payload.schoolId;
             accessToken.value = tokenDto.accessToken;
+            profileImg.value = tokenDto.profileImg || ''
         }
     }
 
@@ -111,8 +114,9 @@ export const useAuthStore = defineStore('auth', () => {
         userId.value = '';
         schoolId.value = null;
         accessToken.value = '';
+        profileImg.value = ''
     }
 
     // 3. 반환
-    return { isLogin, userId, schoolId, accessToken, checkLoginStatus, login, logout }
+    return { isLogin, userId, schoolId, accessToken, profileImg, checkLoginStatus, login, logout }
 })

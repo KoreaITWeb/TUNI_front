@@ -67,12 +67,12 @@ import axios from 'axios'
 import { storeToRefs } from 'pinia'
 
 const authStore = useAuthStore()
-const { userId } = storeToRefs(authStore)
+const { userId, profileImg } = storeToRefs(authStore)
 console.log('헤더에서 userId:', userId.value);
 const chatStore = useChatStore()
 const router = useRouter()
 
-const profileImgUrl = ref('')
+const profileImgUrl = ref(profileImg.value || '')
 // ✅ 안읽은 메시지 총 개수
 const unreadCount = computed(() => chatStore.unreadMessagesCount)
 
@@ -126,7 +126,13 @@ watch(
   },
   { immediate: true }
 )
-
+watch(profileImg, (newVal) => {
+  if (newVal) {
+    profileImgUrl.value = newVal + '?t=' + new Date().getTime()  // 캐시 문제 방지용
+  } else {
+    profileImgUrl.value = ''
+  }
+}, { immediate: true })
 // ✅ 컴포넌트 마운트 시 WebSocket 연결 확인
 onMounted(() => {
   if (authStore.userId && !chatStore.isConnected) {

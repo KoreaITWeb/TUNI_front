@@ -1,6 +1,8 @@
 <template>
-  <div class="container-fluid">
-    <div class="row" style="height: 90vh;">
+  <div class="container-fluid" >
+    
+    <div class="row" style="height: 90vh; margin: auto 0;">
+      <div class="col-md-1 border-end"></div>
       <!-- 왼쪽: 채팅 목록 -->
       <div class="col-md-4 border-end overflow-auto">
         <ChatList 
@@ -14,7 +16,7 @@
       </div>
 
       <!-- 오른쪽: 채팅 내용 -->
-      <div class="col-md-8 d-flex flex-column">
+      <div class="col-md-5 d-flex flex-column border-end">
         <ChatDetail 
           :room="selectedRoom" 
           :messages="messages"
@@ -25,6 +27,7 @@
           @quitRoom="quitChatRoom"
         />
       </div>
+     
     </div>
   </div>
 </template>

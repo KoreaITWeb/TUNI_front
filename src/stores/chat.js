@@ -53,6 +53,7 @@ export const useChatStore = defineStore('chat', () => {
   const currentViewingRoomId = ref(null)
   const isInitialLoadComplete = ref(false)
   const boardNumber = ref('');
+  const profileImgUrl = ref('');
   
   
   // const title =ref('')
@@ -63,6 +64,10 @@ export const useChatStore = defineStore('chat', () => {
   let roomsSubscription = null
   
   const API_BASE = "/api/chat"
+
+  const getProfileImg = computed(() => {
+    return profileImgUrl
+  })
 
   const getBoardProduct = computed(() => {
     
@@ -608,6 +613,7 @@ const getPendingRoom = () => {
     hasUnreadMessages,
     sortedChatRooms,
     getBoardProduct,
+    getProfileImg,
     
     // 액션
     connectGlobalWebSocket,

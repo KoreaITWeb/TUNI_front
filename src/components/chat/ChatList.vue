@@ -20,7 +20,7 @@
     </div>
 
     <!-- 채팅방 목록 -->
-    <ul class="list-group list-group-flush">
+    <ul class="list-group list-group-flush chat-scroll-area">
       <li v-if="props.chatRooms.length === 0 && props.currentUserId" class="text-center text-muted p-4">
         Make your ChatRooms!
       </li>
@@ -34,10 +34,12 @@
       >
         <!-- 프로필 이미지 -->
         <div 
-          class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
-          style="width: 45px; height: 45px; font-size: 18px;"
+          class="rounded-circle  text-black d-flex align-items-center justify-content-center me-3"
+          style="width: 45px; height: 45px; font-size: 18px; color: gray"
         >
-          {{ getOtherUserInitial(room) }}
+        <img :src="profileImgUrl"
+        class="rounded-circle object-cover">
+          <div style="display: none;">{{ getOtherUserInitial(room) }}</div>
         </div>
 
         <!-- 이름 + 메시지 -->
@@ -71,9 +73,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, reactive } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 import enUS from 'date-fns/locale/en-US'
+import axios from 'axios'
 
 
 const props = defineProps(['chatRooms', 'currentUserId', 'isConnected'])
@@ -99,11 +102,31 @@ watch(() => props.chatRooms, (newRooms) => {
 const getOtherUserName = (room) => {
   return room.buyerId === props.currentUserId ? room.sellerId : room.buyerId
 }
-
-const getOtherUserInitial = (room) => {
+const profileImgUrl = ref('')
+const getOtherUserInitial = async (room) => {
   const otherUser = getOtherUserName(room)
-    // console.log(room)
-  return otherUser ? otherUser.charAt(0).toUpperCase() : '?'
+  
+    if(otherUser !== null){
+      try{
+            const res = await axios.get(`/api/mypage/${otherUser}/profile`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+            },
+            responseType: 'blob'
+          })
+          if (res.data) {
+            profileImgUrl.value = URL.createObjectURL(res.data);
+          } else {
+            profileImgUrl.value = '';
+          }
+
+          }catch(err){
+            profileImgUrl.value = '';
+          }
+          // console.log(profileImgUrl)
+    }
+  
+  return otherUser ? false : '?'
 }
 
 function formatTimeAgo(timeString) {
@@ -163,4 +186,35 @@ onMounted(() => {
 .text-truncate {
   max-width: 200px;
 }
+
+
+.chat-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 부드러운 스크롤 */
+.chat-scroll-area {
+  scroll-behavior: smooth;
+}
+
 </style>

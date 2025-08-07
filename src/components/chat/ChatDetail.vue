@@ -1,5 +1,6 @@
 <template>
-  <div v-if="props.room" class="flex-grow-1 d-flex flex-column">
+  <div class="col-md-2"></div>
+  <div v-if="props.room" class="flex-grow-1 d-flex flex-column  ">
     <!-- 채팅 헤더 -->
     <div class="p-3 border-bottom">
       <div class="d-flex justify-content-between align-items-center mb-2">
@@ -64,7 +65,11 @@
             class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" 
             style="width: 32px; height: 32px; font-size: 12px; flex-shrink: 0;"
           >
-            {{ msg.userId ? msg.userId.charAt(0).toUpperCase() : '?' }}
+            <img 
+                  :src="profileId" 
+                  class="w-8 h-8 rounded-full object-cover"
+                >
+            <!-- {{ msg.userId ? msg.userId.charAt(0).toUpperCase() : '?' }} -->
           </div>
           <div>
             <div class="bg-white border rounded p-2 shadow-sm" style="max-width: 300px;">
@@ -85,7 +90,7 @@
         </div>
       </div>
     </div>
-
+    
     <!-- 입력창 -->
     <div v-if="props.room.isOtherUserLeft" class="chat-disabled-notice">
       Chat Over
@@ -124,10 +129,11 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import api from '@/api'
+import axios from 'axios'
 
 const chatStore = useChatStore()
 
-const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected', 'boardNumber'])
+const props = defineProps(['room', 'messages', 'currentUserId', 'isConnected', 'boardNumber','profileImgUrl'])
 const emit = defineEmits(['sendMessage', 'quitRoom', 'lastMessageUpdate'])
 
 const message = ref('')
@@ -138,6 +144,34 @@ const productInfo = ref({
   images: [],
   price: ''
 })
+const profileId = ref('')
+
+
+const getProfileImg =  async (profileImg) => {
+  
+  const profileGet = profileImg
+  console.log(profileGet)
+  
+  try{
+            const res = await axios.get(`/api/mypage/${profileGet}/profile`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+            },
+            responseType: 'blob'
+          })
+          console.log(res.data)
+          if (res.data) {
+            profileId.value = URL.createObjectURL(res.data);
+          } else {
+            profileId.value = '';
+          }
+
+          }catch(err){
+            profileId.value = '';
+          }
+          console.log(profileId.value)
+        
+}
 
 // 게시글 정보 가져오기
 const getBoardProduct = async (boardId) => {
@@ -190,9 +224,16 @@ watch(() => props.room, (newRoom) => {
       mainImage: '',
       images: []
     }
+
+    profileId.value = ''
+    // console.log(newRoom.sellerId)
+    getProfileImg(newRoom.sellerId)
     // 새 게시글 정보 로드
     getBoardProduct(newRoom.boardId)
+    // 
+    // getProfileImg()
     
+    try{
     // 마지막 메시지 업데이트
     if (lastMessage.value) {
       emit('lastMessageUpdate', {
@@ -202,6 +243,7 @@ watch(() => props.room, (newRoom) => {
         lastMessageUserId: lastMessage.value.userId
       })
     }
+  }catch(err){}
   }
 }, { immediate: true })
 

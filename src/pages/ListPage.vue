@@ -3,12 +3,14 @@
     <div class="row">
       <!-- 왼쪽 필터 영역 -->
       <div class="col-md-3 border-end" style="margin-top: 5rem;">
-        <h5>Category</h5>
+         <div class="side-nav-categories">
+          <div class="title"><strong>CATEGORY</strong></div>
+          <div class="category-content px-3 pb-3">
         <div class="mb-2">
           <span
             v-for="category in selectedCategories"
             :key="category"
-            class="badge bg-secondary me-1"
+            class="badge bg-dark me-1"
             style="cursor: pointer"
             @click="removeCategory(category)"
           >
@@ -31,12 +33,14 @@
           >
           <label class="form-check-label" :for="category">{{ category }}</label>
         </div>
+
         <label class="form-label mt-3">Price</label>
         <div class="d-flex gap-2">
           <input type="number" class="form-control" placeholder="Min" v-model="minPrice">
           <span>~</span>
           <input type="number" class="form-control" placeholder="Max" v-model="maxPrice">
         </div>
+
         <h5 class="mt-4">Status</h5>
         <div
           class="form-check"
@@ -53,8 +57,9 @@
           >
           <label class="form-check-label" :for="status">{{ status }}</label>
       </div>
+    </div>
   </div>
-
+</div>
       <!-- 오른쪽 콘텐츠 영역 -->
       <div class="col-md-9">
         <!-- 검색 & 정렬 -->
@@ -421,4 +426,64 @@ onMounted(() => {
   margin-top: 5rem;
 }
 
+.badge.bg-dark {
+  background-color: #000 !important;
+  color: #fff !important;
+  font-size: 0.7rem;
+  padding: 0.5em 0.75em;
+  border-radius: 999px;
+}
+
+.btn-primary {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+.side-nav-categories {
+  position: relative;
+  background-color: #fff;
+  border: 1px solid #eee;
+  box-shadow: 0 5px 0 rgba(200, 200, 200, 0.2);
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.side-nav-categories .title {
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 25px 10px 25px;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background:  #2563eb;
+  position: relative;
+  display: inline-block;
+  margin-left: -10px;
+  margin-top: 0;
+}
+
+.side-nav-categories .title::before {
+  content: '\f0c9';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 10px;
+}
+
+.side-nav-categories .title::after {
+  content: "";
+  height: 1px;
+  width: 1px;
+  border-style: solid;
+  border-width: 5px;
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  border-color: #1d4ed8 #1d4ed8 transparent transparent;
+}
 </style>

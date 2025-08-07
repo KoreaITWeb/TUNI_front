@@ -483,7 +483,7 @@ const handleCheckCurrentRoom = (event) => {
 // 컴포넌트 마운트 시 초기화
 onMounted(async () => {
   if (!isLogin.value) {
-    alert('로그인 후 이용가능합니다.');
+    alert('Please log in to continue.');
     router.push('/login');
   }
   // console.log('🔍 ChatPages 마운트됨')

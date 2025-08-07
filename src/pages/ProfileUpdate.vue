@@ -78,7 +78,7 @@
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-        alert('이미지 파일만 업로드할 수 있습니다.')
+        alert('Only image files can be uploaded.')
         return
     }
 
@@ -88,7 +88,7 @@
 
     const submitProfileUpdate = async () => {
     if (!nickname.value.trim()) {
-      alert('닉네임을 입력해주세요.');
+      alert('Please enter a nickname.');
       return;
     }
 
@@ -116,17 +116,17 @@
       console.log('프로필 수정 API 응답:', updateRes.data);
 
       if (updateRes.data) {
-        alert('프로필이 수정되었습니다!');
+        alert('Profile updated successfully!');
         authStore.login(updateRes.data);
         console.log('authStore.profileImg:', authStore.profileImg)
         router.push('/profile');
       } else {
-        alert('프로필 수정 중 오류가 발생했습니다.');
+        alert('An error occurred while updating your profile.');
       }
 
     } catch (err) {
       console.error('❌ 프로필 수정 실패:', err);
-      alert(err.response?.data?.message || '프로필 수정 중 문제가 발생했습니다.');
+      alert('An error occurred while updating your profile.');
     } finally {
       isLoading.value = false;
     }

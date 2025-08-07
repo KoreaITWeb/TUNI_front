@@ -97,14 +97,14 @@
           </div>
         </div>
         <div v-if="isLoading" class="text-center mt-5">
-          <p>상품 목록을 불러오는 중...</p>
+          <p>Loading Items...</p>
         </div>
         <div v-else-if="error" class="alert alert-danger mt-5">
           {{ error }}
         </div>
         <div v-else class="product-list">
           <div v-if="filteredProducts.length === 0" class="text-center mt-5">
-            <p>등록된 상품이 없습니다.</p>
+            <p>No items listed yet.</p>
           </div>
           <div
             v-else
@@ -186,11 +186,12 @@ const inputPage = ref(1);
 const selectedStatuses = ref([]);
 const allStatus = ['SALE','SOLD']
 
-const searchType = ref('Title');
+// 기본 검색 타입을 'title'로 설정합니다.
+const searchType = ref('title');
 const searchOptions = {
   title: 'Title',
   content: 'Content',
-  userid: 'Nickname'
+  userid: 'Userid'
 };
 const searchTypeLabel = computed(() => searchOptions?.[searchType.value] || 'Title');
 
@@ -253,10 +254,16 @@ const filteredProducts = computed(() => {
           keywordMatch = (product.userId?.toLowerCase() || "").includes(keyword);
           break;
         default:
-          keywordMatch = true;
+          keywordMatch = false; // 기본값일 경우 일치하지 않도록 설정
       }
     }
-
+    
+    // searchType의 기본값이 'title'로 변경되었으므로,
+    // 키워드가 없거나, 키워드가 있고 searchType이 title일 경우 제목을 기준으로 검색합니다.
+    if (keyword === "" || searchType.value === 'title') {
+      keywordMatch = product.title?.toLowerCase().includes(keyword);
+    }
+    
     return categoryMatch && minOk && maxOk && keywordMatch && statusMatch;
   });
 });
@@ -276,7 +283,7 @@ async function fetchProducts() {
     const currentSchoolId = schoolId.value;
 
     if (!currentIsLogin || !currentUserId || !currentSchoolId) {
-      error.value = '로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.';
+      error.value = 'Your session has expired. Please log in again.';
       isLoading.value = false;
       alert('Please log in to continue.');
       router.push('/login');
@@ -299,7 +306,7 @@ async function fetchProducts() {
 
   } catch (err) {
     console.error('상품 목록을 불러오는 중 에러 발생:', err);
-    error.value = '상품 목록을 불러올 수 없습니다.';
+    error.value = 'Could not load product list.';
   } finally {
     isLoading.value = false;
   }

@@ -39,7 +39,7 @@
         >
         <img :src="profileImgUrl"
         class="rounded-circle object-cover">
-          <div style="display: none;">{{ getOtherUserInitial(room) }}</div>
+          <!-- <div style="display: none;">{{ getOtherUserInitial(room) }}</div> -->
         </div>
 
         <!-- 이름 + 메시지 -->
@@ -95,6 +95,7 @@ watch(() => props.currentUserId, (newUserId) => {
 watch(() => props.chatRooms, (newRooms) => {
   // console.log('🔍 ChatList - 채팅방 목록 업데이트:', newRooms)
   newRooms.forEach(room => {
+    getOtherUserInitial(room)
     // console.log(`🔍 Room ${room.chatId}: unreadCount = ${room.unreadCount}`)
   })
 }, { deep: true })

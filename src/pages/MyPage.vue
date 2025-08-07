@@ -66,7 +66,7 @@
             You haven't liked any items yet.
           </div>
           <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <div v-for="item in wishlistItems" :key="item.id" class="product-card-small">
+            <div v-for="item in wishlistItems" :key="item.id" class="product-card-small" @click="goToDetail(item.id)">
               <img :src="item.image" :alt="item.title" class="product-image">
               <div class="p-2">
                 <h4 class="product-title-small">{{ item.title }}</h4>
@@ -271,6 +271,10 @@ const menuItems = computed(() => [
   //{ id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
   //{ id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
 ])
+
+function goToDetail(boardId) {
+  router.push(`/details/${boardId}`);
+};
 </script>
 
 <style scoped>

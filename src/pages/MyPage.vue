@@ -1,159 +1,102 @@
 <template>
-  <div class="my-page">
-    <div class="main-container">
-      <!-- Main Profile Section -->
-      <div class="profile-section">
-        <div class="profile-content">
-          <!-- Profile Info -->
-          <div class="profile-info">
-            <div class="profile-avatar-container">
-              <img 
-                :src="user.profileImage" 
-                :alt="user.name"
-                class="profile-avatar"
-              >
-              
-            </div>
-            <div class="profile-details">
-              <h2 class="profile-name">{{ user.name }}</h2>
-              <p class="profile-department">{{ user.schoolname }} </p>
-            </div>
-          </div>
-
-          <!-- Stats Dashboard -->
-          <div class="stats-dashboard">
-            <div class="stat-card stat-selling">
-              <div class="stat-number">{{ stats.selling }}</div>
-              <div class="stat-label">For Sale</div>
-            </div>
-            <div class="stat-card stat-sold">
-              <div class="stat-number">{{ stats.sold }}</div>
-              <div class="stat-label">Sold</div>
-            </div>
-            <!--
-            <div class="stat-card stat-purchased">
-              <div class="stat-number">{{ stats.purchased }}</div>
-              <div class="stat-label">구매완료</div>
-            </div>
-            -->
-            <div class="stat-card stat-wishlist">
-              <div class="stat-number">{{ stats.wishlist }}</div>
-              <div class="stat-label">Liked</div>
-            </div>
-          </div>
-
-          <!-- Quick Actions -->
-          <div class="quick-actions">
-            <button class="btn-primary" @click="goToSellpage">
-              <Plus class="btn-icon" />
-              Sell
-            </button>
-            <button class="btn-secondary" @click="goToProfileUpdate">
-              <Edit class="btn-icon" />
-              Edit Profile
-            </button>
-          </div>
+  <div class="bg-slate-50 min-h-screen">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      
+      <div class="profile-card bg-white p-6 sm:p-8 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center gap-6 mb-8">
+        <div class="relative">
+          <img 
+            :src="user.profileImage" 
+            :alt="user.name"
+            class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-white shadow-md"
+          >
         </div>
-       
-        <!-- Recent Activity 
-        <div class="recent-activity">
-          <h3 class="section-title">최근 활동</h3>
-          <div class="activity-grid">
-            <div class="activity-section">
-              <h4 class="activity-title">최근 등록한 상품</h4>
-              <div class="activity-list">
-                <div v-for="item in recentItems" :key="item.id" class="activity-item">
-                  <img :src="item.image" :alt="item.title" class="activity-image">
-                  <div class="activity-details">
-                    <p class="activity-item-title">{{ item.title }}</p>
-                    <p class="activity-item-price">{{ item.price.toLocaleString() }}원</p>
-                  </div>
-                  <span class="status-badge" :class="getStatusClass(item.status)">
-                    {{ item.status }}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div class="activity-section">
-              <h4 class="activity-title">최근 메시지</h4>
-              <div class="activity-list">
-                <div v-for="message in recentMessages" :key="message.id" class="message-item">
-                  <img :src="message.senderImage" :alt="message.sender" class="message-avatar">
-                  <div class="message-details">
-                    <p class="message-sender">{{ message.sender }}</p>
-                    <p class="message-content">{{ message.content }}</p>
-                  </div>
-                  <span class="message-time">{{ message.time }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="flex-grow text-center sm:text-left">
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">{{ user.name }}</h2>
+          <p class="text-md text-gray-500 mt-1">{{ user.schoolname }}</p>
         </div>
-         -->
-      </div>
-     
-      <!-- Navigation Menu -->
-      <div class="navigation-menu">
-        <button 
-          v-for="menu in menuItems" 
-          :key="menu.id"
-          @click="activeMenu = menu.id"
-          class="menu-item"
-          :class="{ 'menu-item-active': activeMenu === menu.id }"
-        >
-          <component :is="menu.icon" class="menu-icon" />
-          <div class="menu-title">{{ menu.title }}</div>
-          <div class="menu-count">{{ menu.count }}</div>
-        </button>
+        <div class="quick-actions">
+          <button class="btn-primary" @click="goToSellpage">
+            <Plus class="btn-icon" />
+            Sell
+          </button>
+          <button class="btn-secondary" @click="goToProfileUpdate">
+            <Edit class="btn-icon" />
+            Edit Profile
+          </button>
+        </div>
       </div>
 
-      <!-- Content Area -->
-      <div class="content-area">
-        <div v-if="activeMenu === 'wishlist'" class="content-section">
-          <h3 class="content-title">Liked Items</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="stat-card bg-white p-5 rounded-xl shadow-sm text-center">
+          <div class="text-3xl font-bold text-sky-600">{{ stats.selling }}</div>
+          <div class="text-sm font-medium text-gray-500 mt-1">For Sale</div>
+        </div>
+        <div class="stat-card bg-white p-5 rounded-xl shadow-sm text-center">
+          <div class="text-3xl font-bold text-gray-700">{{ stats.sold }}</div>
+          <div class="text-sm font-medium text-gray-500 mt-1">Sold</div>
+        </div>
+        <div class="stat-card bg-white p-5 rounded-xl shadow-sm text-center">
+          <div class="text-3xl font-bold text-rose-500">{{ stats.wishlist }}</div>
+          <div class="text-sm font-medium text-gray-500 mt-1">Liked</div>
+        </div>
+      </div>
+
+      <div class="border-b border-gray-200 mb-6">
+        <nav class="flex -mb-px space-x-6">
+          <button 
+            v-for="menu in menuItems" 
+            :key="menu.id"
+            @click="activeMenu = menu.id"
+            class="py-3 px-1 font-medium text-md transition-colors duration-200"
+            :class="activeMenu === menu.id 
+              ? 'border-b-2 border-blue-500 text-blue-600' 
+              : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+          >
+            {{ menu.title }}
+            <span class="ml-2 bg-gray-200 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+              {{ menu.count }}
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="content-area bg-white p-6 rounded-2xl shadow-sm min-h-[300px]">
+        <div v-if="activeMenu === 'wishlist'">
           <div v-if="wishlistItems.length === 0" class="empty-message">
             You haven't liked any items yet.
           </div>
-          <div v-else class="wishlist-grid">
-            <div v-for="item in wishlistItems" :key="item.id" class="wishlist-item">
-              <img :src="item.image" :alt="item.title" class="wishlist-image">
-              <h4 class="wishlist-title">{{ item.title }}</h4>
-              <p class="wishlist-price">$ {{ item.price.toLocaleString() }}</p>
+          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div v-for="item in wishlistItems" :key="item.id" class="product-card-small">
+              <img :src="item.image" :alt="item.title" class="product-image">
+              <div class="p-2">
+                <h4 class="product-title-small">{{ item.title }}</h4>
+                <p class="product-price-small">$ {{ item.price.toLocaleString() }}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div v-else-if="activeMenu === 'myItems'" class="content-section">
-          <h3 class="content-title">My Items</h3>
-          <div class="product-list">
-            <template v-if="myProducts.length === 0">
-              <div>You haven't listed any items for sale.</div>
-            </template>
-            <template v-else>
-              <div
-                class="product-card"
-                style="width: 12rem; cursor: pointer;"
-                v-for="item in myProducts"
-                :key="`${item.boardId}-${item.title}`"
-                @click="goToDetail(item.boardId)"
-              >
-                <img
-                  :src="item.thumbnailUrl"
-                  alt="상품 이미지"
-                  style="width: 100%; height: 150px; object-fit: cover;"
-                />
-                <div class="card-body">
-                  <h6 class="card-title">{{ item.title }}</h6>
-                  <p class="card-text text-truncate">{{ item.content }}</p>
-                  <p class="card-text fw-bold">{{ item.price?.toLocaleString?.() || 0 }}원</p>
-                </div>
+        <div v-else-if="activeMenu === 'myItems'">
+          <div v-if="myProducts.length === 0" class="empty-message">
+            You haven't listed any items for sale.
+          </div>
+          <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div
+              v-for="item in myProducts"
+              :key="item.boardId"
+              class="product-card-small cursor-pointer"
+              @click="goToDetail(item.boardId)"
+            >
+              <img :src="item.thumbnailUrl || placeholder" alt="상품 이미지" class="product-image"/>
+              <div class="p-2">
+                <h4 class="product-title-small">{{ item.title }}</h4>
+                <p class="product-price-small">$ {{ item.price?.toLocaleString?.() || 0 }}</p>
               </div>
-            </template>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -169,7 +112,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const activeMenu = ref('wishlist')
+const activeMenu = ref('myItems')
 const myProducts = ref([])
 const wishlistItems = ref([])
 const placeholder = '/placeholder.svg'
@@ -249,35 +192,31 @@ function updateSaleStatusStats() {
 // 내가 등록한 상품 및 user 정보, stats.selling 업데이트 함수
 async function loadMyPageData(userId) {
   try {
-    console.log('loadMyPageData 호출 - userId:', userId)
-    console.log("프론트에서 서버에 요청 보내는 userId:", userId);
+    // console.log('loadMyPageData 호출 - userId:', userId)
+    // console.log("프론트에서 서버에 요청 보내는 userId:", userId);
 
     const res = await api.get(`/api/mypage/${userId}`)
-    console.log("프론트에서 서버에 요청 보내는 userId:", userId);
+    // console.log("프론트에서 서버에 요청 보내는 userId:", userId);
 
-    console.log(res.data.saleCount);  // 판매중
-    console.log(res.data.soldCount)
-    console.log('API 응답 데이터:', res.data)
-    console.log('내 상품 목록:', res.data.productList)
+    // console.log(res.data.saleCount);  // 판매중
+    // console.log(res.data.soldCount)
+    // console.log('API 응답 데이터:', res.data)
+    // console.log('내 상품 목록:', res.data.productList)
     myProducts.value = res.data.productList || []
     // 상태별 카운트 업데이트
     updateSaleStatusStats();
-    console.log('상품 리스트 길이:', (res.data.productList || []).length)
-    console.log("상품 saleStatus 상태 확인:");
-    myProducts.value.forEach((p, i) => {
-      console.log(`상품[${i}] saleStatus:`, p.saleStatus);
-      console.log(`상품[${i}] 전체:`, JSON.parse(JSON.stringify(p)));
-    });
+    // console.log('상품 리스트 길이:', (res.data.productList || []).length)
+    // console.log("상품 saleStatus 상태 확인:");
     user.name = res.data.user.userId
     user.schoolname = res.data.university.name
     
-    console.log('첫 번째 상품 상세:', res.data.productList[0])
+    // console.log('첫 번째 상품 상세:', res.data.productList[0])
     //stats.selling = myProducts.value.length
     
 
-    console.log('판매중 상품 개수:', stats.selling)
-    console.log('상품 목록:', myProducts.value)
-    console.log('업데이트된 user 객체:', user)
+    // console.log('판매중 상품 개수:', stats.selling)
+    // console.log('상품 목록:', myProducts.value)
+    // console.log('업데이트된 user 객체:', user)
     // ✅ 프로필 이미지도 같이 불러오기
     await fetchProfileImage(userId)
   } catch (err) {
@@ -293,8 +232,8 @@ onMounted(async () => {
   }
   const userId = authStore.userId
   const schoolId = authStore.schoolId
-  console.log("현재 저장된 userId: ", userId)
-  console.log("현재 저장된 schoolId: ", schoolId)
+  // console.log("현재 저장된 userId: ", userId)
+  // console.log("현재 저장된 schoolId: ", schoolId)
   
   if (!userId || !schoolId) {
     console.error('사용자 ID 또는 학교 ID가 없습니다.')
@@ -320,65 +259,37 @@ watch(
   () => authStore.userId,
   async (newUserId, oldUserId) => {
     if (newUserId && newUserId !== oldUserId) {
-      console.log('✅ userId 변경 감지:', oldUserId, '→', newUserId)
+      // console.log('✅ userId 변경 감지:', oldUserId, '→', newUserId)
       await loadWishlist(newUserId)
       await loadMyPageData(newUserId)
     }
   }
 )
 const menuItems = computed(() => [
-  { id: 'wishlist', title: 'Liked Items', count: `${wishlistItems.value.length}`, icon: Heart },
   { id: 'myItems', title: 'My Items', count: `${myProducts.value.length}`, icon: Package },
+  { id: 'wishlist', title: 'Liked Items', count: `${wishlistItems.value.length}`, icon: Heart },
   //{ id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
   //{ id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
 ])
-
-const recentItems = [
-  {
-    id: 1,
-    title: '맥북 프로 13인치',
-    price: 1200000,
-    image: placeholder,
-    status: '판매중'
-  },
-  {
-    id: 2,
-    title: '아이패드 에어',
-    price: 600000,
-    image: placeholder,
-    status: '예약중'
-  }
-]
-
-const recentMessages = [
-  {
-    id: 1,
-    sender: '이학생',
-    content: '맥북 상태 어떤가요?',
-    time: '2분 전',
-    senderImage: placeholder
-  },
-  {
-    id: 2,
-    sender: '박구매',
-    content: '네고 가능한가요?',
-    time: '1시간 전',
-    senderImage: placeholder
-  }
-]
-
-const getStatusClass = (status) => {
-  switch (status) {
-    case '판매중':
-      return 'status-selling'
-    case '예약중':
-      return 'status-reserved'
-    case '판매완료':
-      return 'status-sold'
-    default:
-      return 'status-default'
-  }
-}
 </script>
 
-
+<style scoped>
+/* Tailwind CSS로 대부분의 스타일을 처리하므로, 복잡한 CSS는 필요 없습니다. */
+.empty-message {
+  @apply text-center text-gray-500 py-16;
+}
+.product-card-small {
+  @apply bg-white border border-gray-200 rounded-lg overflow-hidden transition-shadow hover:shadow-lg;
+}
+.product-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+.product-title-small {
+  @apply font-semibold text-sm text-gray-800 truncate;
+}
+.product-price-small {
+  @apply text-sm text-gray-600 mt-1;
+}
+</style>

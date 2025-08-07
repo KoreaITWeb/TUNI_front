@@ -276,7 +276,7 @@ async function fetchProducts() {
     const currentSchoolId = schoolId.value;
 
     if (!currentIsLogin || !currentUserId || !currentSchoolId) {
-      error.value = '로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.';
+      error.value = 'Your session has expired. Please log in again.';
       isLoading.value = false;
       alert('Please log in to continue.');
       router.push('/login');
@@ -299,7 +299,7 @@ async function fetchProducts() {
 
   } catch (err) {
     console.error('상품 목록을 불러오는 중 에러 발생:', err);
-    error.value = '상품 목록을 불러올 수 없습니다.';
+    error.value = 'Could not load product list.';
   } finally {
     isLoading.value = false;
   }

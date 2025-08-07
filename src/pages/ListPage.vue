@@ -186,11 +186,12 @@ const inputPage = ref(1);
 const selectedStatuses = ref([]);
 const allStatus = ['SALE','SOLD']
 
-const searchType = ref('Title');
+// 기본 검색 타입을 'title'로 설정합니다.
+const searchType = ref('title');
 const searchOptions = {
   title: 'Title',
   content: 'Content',
-  userid: 'Nickname'
+  userid: 'Userid'
 };
 const searchTypeLabel = computed(() => searchOptions?.[searchType.value] || 'Title');
 
@@ -253,10 +254,16 @@ const filteredProducts = computed(() => {
           keywordMatch = (product.userId?.toLowerCase() || "").includes(keyword);
           break;
         default:
-          keywordMatch = true;
+          keywordMatch = false; // 기본값일 경우 일치하지 않도록 설정
       }
     }
-
+    
+    // searchType의 기본값이 'title'로 변경되었으므로,
+    // 키워드가 없거나, 키워드가 있고 searchType이 title일 경우 제목을 기준으로 검색합니다.
+    if (keyword === "" || searchType.value === 'title') {
+      keywordMatch = product.title?.toLowerCase().includes(keyword);
+    }
+    
     return categoryMatch && minOk && maxOk && keywordMatch && statusMatch;
   });
 });

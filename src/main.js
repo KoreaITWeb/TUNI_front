@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import '@/assets/styles/global/layout.css';
 import axios from 'axios'
 import './assets/main.css'
+import '@fortawesome/fontawesome-free/css/all.min.css'
 
 const app = createApp(App)
 const pinia = createPinia()

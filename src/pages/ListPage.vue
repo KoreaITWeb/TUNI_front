@@ -97,14 +97,14 @@
           </div>
         </div>
         <div v-if="isLoading" class="text-center mt-5">
-          <p>상품 목록을 불러오는 중...</p>
+          <p>Loading Items...</p>
         </div>
         <div v-else-if="error" class="alert alert-danger mt-5">
           {{ error }}
         </div>
         <div v-else class="product-list">
           <div v-if="filteredProducts.length === 0" class="text-center mt-5">
-            <p>등록된 상품이 없습니다.</p>
+            <p>No items listed yet.</p>
           </div>
           <div
             v-else

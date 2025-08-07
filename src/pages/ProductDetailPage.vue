@@ -56,7 +56,7 @@
                   'bg-gray-300 text-gray-800': product.saleStatus === 'SOLD' 
                 }"
               >
-                {{ product.saleStatus === 'SALE' ? 'For Sale' : 'SOLE' }}
+                {{ product.saleStatus === 'SALE' ? 'For Sale' : 'SOLD' }}
               </span>
             </div>
           </div>

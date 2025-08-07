@@ -17,14 +17,6 @@
             <div class="profile-details">
               <h2 class="profile-name">{{ user.name }}</h2>
               <p class="profile-department">{{ user.schoolname }} </p>
-              <div class="profile-rating">
-                <div class="rating-stars">
-                  <Star class="star-icon" />
-                  <span class="rating-score">{{ user.rating }}</span>
-                </div>
-                <span class="rating-separator">•</span>
-                <span class="transaction-count">거래 {{ user.transactionCount }}회</span>
-              </div>
             </div>
           </div>
 
@@ -32,11 +24,11 @@
           <div class="stats-dashboard">
             <div class="stat-card stat-selling">
               <div class="stat-number">{{ stats.selling }}</div>
-              <div class="stat-label">판매중</div>
+              <div class="stat-label">For Sale</div>
             </div>
             <div class="stat-card stat-sold">
               <div class="stat-number">{{ stats.sold }}</div>
-              <div class="stat-label">판매완료</div>
+              <div class="stat-label">Sold</div>
             </div>
             <!--
             <div class="stat-card stat-purchased">
@@ -46,7 +38,7 @@
             -->
             <div class="stat-card stat-wishlist">
               <div class="stat-number">{{ stats.wishlist }}</div>
-              <div class="stat-label">찜한상품</div>
+              <div class="stat-label">Liked</div>
             </div>
           </div>
 
@@ -54,11 +46,11 @@
           <div class="quick-actions">
             <button class="btn-primary" @click="goToSellpage">
               <Plus class="btn-icon" />
-              상품 등록
+              Sell
             </button>
             <button class="btn-secondary" @click="goToProfileUpdate">
               <Edit class="btn-icon" />
-              프로필 수정
+              Edit Profile
             </button>
           </div>
         </div>
@@ -118,24 +110,24 @@
       <!-- Content Area -->
       <div class="content-area">
         <div v-if="activeMenu === 'wishlist'" class="content-section">
-          <h3 class="content-title">찜한 목록</h3>
+          <h3 class="content-title">Liked Items</h3>
           <div v-if="wishlistItems.length === 0" class="empty-message">
-            찜한 상품이 없습니다.
+            You haven't liked any items yet.
           </div>
           <div v-else class="wishlist-grid">
             <div v-for="item in wishlistItems" :key="item.id" class="wishlist-item">
               <img :src="item.image" :alt="item.title" class="wishlist-image">
               <h4 class="wishlist-title">{{ item.title }}</h4>
-              <p class="wishlist-price">{{ item.price.toLocaleString() }}원</p>
+              <p class="wishlist-price">$ {{ item.price.toLocaleString() }}</p>
             </div>
           </div>
         </div>
 
         <div v-else-if="activeMenu === 'myItems'" class="content-section">
-          <h3 class="content-title">내가 등록한 상품</h3>
+          <h3 class="content-title">My Items</h3>
           <div class="product-list">
             <template v-if="myProducts.length === 0">
-              <div>등록한 상품이 없습니다.</div>
+              <div>You haven't listed any items for sale.</div>
             </template>
             <template v-else>
               <div
@@ -159,13 +151,6 @@
             </template>
           </div>
         </div>
-        <div v-else-if="activeMenu === 'reviews'" class="content-section">
-          <h3 class="content-title">리뷰</h3>
-        </div>
-
-        <div v-else-if="activeMenu === 'cart'" class="content-section">
-          <h3 class="content-title">장바구니</h3>
-        </div>
       </div>
     </div>
 
@@ -174,10 +159,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
-import { 
-  Star, Plus, Edit, Heart, 
-  Package, MessageSquare, ShoppingCart 
-} from 'lucide-vue-next'
+import { Plus, Edit, Heart, Package} from 'lucide-vue-next'
 import '@/assets/styles/pages/Mypage.css'
 import api from '@/api'
 import axios from 'axios'
@@ -306,7 +288,7 @@ async function loadMyPageData(userId) {
 // 컴포넌트 마운트 시 찜한 상품과 내가 등록한 상품 모두 불러오기
 onMounted(async () => {
   if (!isLogin.value) {
-    alert('로그인 후 이용가능합니다.');
+    alert('Please log in to continue.');
     router.push('/login');
   }
   const userId = authStore.userId
@@ -345,8 +327,8 @@ watch(
   }
 )
 const menuItems = computed(() => [
-  { id: 'wishlist', title: '찜한목록', count: `${wishlistItems.value.length}개`, icon: Heart },
-  { id: 'myItems', title: '내가 등록한 상품', count: `${myProducts.value.length}개`, icon: Package },
+  { id: 'wishlist', title: 'Liked Items', count: `${wishlistItems.value.length}`, icon: Heart },
+  { id: 'myItems', title: 'My Items', count: `${myProducts.value.length}`, icon: Package },
   //{ id: 'reviews', title: '리뷰', count: '15개', icon: MessageSquare },
   //{ id: 'cart', title: '장바구니', count: '3개', icon: ShoppingCart }
 ])

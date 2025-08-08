@@ -66,7 +66,7 @@ const handleFileChange = (event) => {
 
 const submitNickname = async () => {
   if (!nickname.value.trim()) {
-    alert('닉네임을 입력해주세요.')
+    alert('Please Enter Nickname.')
     return
   }
 
@@ -82,7 +82,7 @@ const submitNickname = async () => {
     console.log('중복 체크 결과:', response.data)
 
     if (!response.data.available) {
-      alert('이미 사용 중인 닉네임입니다.')
+      alert('Nickname already taken.')
       return
     }
 
@@ -102,17 +102,17 @@ const submitNickname = async () => {
       },
     });
     if (response2.data){
-      alert('닉네임 설정이 완료되었습니다!')
+      alert('Nickname successfully set!')
       const result = response2.data
       authStore.login(result.token) 
       router.push('/main')
     } else {
-      alert('계정 생성 도중 오류가 발생하였습니다')
+      alert('An error occured while registering.')
     }
 
   } catch (err) {
     console.error('닉네임 설정 실패:', err)
-    alert(err.response?.data?.message || '닉네임 설정 중 문제가 발생했습니다.')
+    alert(err.response?.data?.message || 'An error occured while setting nickname.')
   } finally {
     isLoading.value = false
   }

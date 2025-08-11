@@ -23,4 +23,3 @@
 | **Styling** | Tailwind CSS, Bootstrap |
 | **HTTP Client** | Axios (Interceptors for Token Handling) |
 | **Icons** | Lucide Icons (`lucide-vue-next`) |
-| **Build Tool** | Vite |
